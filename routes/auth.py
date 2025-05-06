@@ -202,9 +202,13 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 def login():
     """User login route"""
     # If user is already authenticated, redirect to dashboard
-    if current_user.is_authenticated:
+    # Skip this check when there's no token in the URL - this prevents redirect loops
+    if current_user.is_authenticated and request.args.get('token'):
         logging.debug("User already authenticated, redirecting to dashboard")
-        return redirect(url_for('dashboard.index'))
+        return redirect(url_with_token('dashboard.index'))
+    elif current_user.is_authenticated and 'auth_token' in session and session['auth_token']:
+        logging.debug("User already authenticated via session, redirecting to dashboard")
+        return redirect(url_with_token('dashboard.index'))
     
     if request.method == 'POST':
         username = request.form.get('username')
