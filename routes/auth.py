@@ -123,21 +123,31 @@ def login():
         # Set session cookie explicitly with secure settings
         from datetime import timedelta
         logging.debug(f"Session cookie before setting: {session.get('user_id')}")
-        if not login_available:
-            cookie_val = request.cookies.get('session', '')
-            logging.debug(f"Setting session cookie on response: {cookie_val[:10]}...")
+        cookie_name = current_app.config.get('SESSION_COOKIE_NAME', 'session')
+        logging.debug(f"Using configured cookie name: {cookie_name}")
+        
+        # Get both the standard and custom cookie values
+        std_cookie = request.cookies.get('session', '')
+        custom_cookie = request.cookies.get(cookie_name, '')
+        logging.debug(f"Standard cookie value: {std_cookie[:5]}..., Custom cookie value: {custom_cookie[:5]}...")
+        
+        # Use the cookie value that's present, prefer the custom one
+        cookie_val = custom_cookie if custom_cookie else std_cookie
+        
+        if not login_available or True:  # Always set the cookie for now for debugging
+            logging.debug(f"Setting session cookie on response: {cookie_val[:10] if cookie_val else 'empty'}")
             # Set the cookie with more explicit parameters
             max_age = 86400 * 7  # 7 days in seconds
             expires = datetime.utcnow() + timedelta(days=7)
             resp.set_cookie(
-                'anpr_session',           # Use our custom cookie name
-                cookie_val,              # Use the value from the request
-                max_age=max_age,         # 7 days in seconds
-                expires=expires,         # Also set expires
-                path='/',                # Allow all paths
-                httponly=True,           # No JavaScript access
-                samesite='Lax',          # Allow redirects
-                secure=False             # Don't require HTTPS
+                cookie_name,              # Use the configured cookie name
+                cookie_val,               # Use the value from the request
+                max_age=max_age,          # 7 days in seconds
+                expires=expires,          # Also set expires
+                path='/',                 # Allow all paths
+                httponly=True,            # No JavaScript access
+                samesite='Lax',           # Allow redirects
+                secure=False              # Don't require HTTPS
             )
         
         # Redirect to the requested page or dashboard
@@ -163,8 +173,10 @@ def logout():
     resp = redirect(url_for('auth.login'))
     
     # Clear both session cookie and custom cookie
+    cookie_name = current_app.config.get('SESSION_COOKIE_NAME', 'session')
+    logging.debug(f"Deleting cookies: 'session' and '{cookie_name}'")
     resp.delete_cookie('session')
-    resp.delete_cookie('anpr_session')
+    resp.delete_cookie(cookie_name)
     
     return resp
 
