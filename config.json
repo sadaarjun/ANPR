@@ -1,0 +1,28 @@
+{
+    "camera": {
+        "resolution": [
+            1920,
+            1080
+        ],
+        "framerate": 30,
+        "rotation": 0,
+        "continuous_capture": true,
+        "max_image_width": 1280,
+        "enhance_contrast": true
+    },
+    "anpr": {
+        "processing_interval": 2,
+        "confidence_threshold": 0.7,
+        "auto_register_vehicles": true
+    },
+    "mygate": {
+        "community_id": "",
+        "device_id": "",
+        "entry_point_name": "Main Gate"
+    },
+    "system": {
+        "debug_mode": true,
+        "log_level": "INFO",
+        "image_retention_days": 30
+    }
+}

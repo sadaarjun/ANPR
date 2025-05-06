@@ -1,0 +1,22 @@
+{% if recent_logs %}
+    {% for log in recent_logs %}
+        <tr>
+            <td><strong>{{ log.license_plate }}</strong></td>
+            <td>
+                <span class="badge bg-{{ 'success' if log.event_type == 'entry' else 'warning' }}">
+                    {{ log.event_type|title }}
+                </span>
+            </td>
+            <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            <td>
+                <span class="badge bg-{{ 'success' if log.status == 'success' else ('danger' if log.status == 'error' else 'secondary') }}">
+                    {{ log.status|title }}
+                </span>
+            </td>
+        </tr>
+    {% endfor %}
+{% else %}
+    <tr>
+        <td colspan="4" class="text-center">No recent activities</td>
+    </tr>
+{% endif %}

@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title %}Vehicle Logs - ANPR System{% endblock %}
+
+{% block content %}
+<div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-car-front me-2"></i>Vehicle Logs</h1>
+        <div>
+            <a href="{{ url_for('dashboard.vehicles') }}" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Vehicles
+            </a>
+        </div>
+    </div>
+
+    <!-- Vehicle Details Card -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Vehicle Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 text-center mb-3 mb-md-0">
+                    <span class="license-plate d-block mx-auto mb-2" style="font-size: 1.5rem; padding: 10px;">{{ vehicle.license_plate }}</span>
+                    <span class="badge bg-{{ 'success' if vehicle.status == 'active' else 'danger' if vehicle.status == 'blacklisted' else 'secondary' }}">
+                        {{ vehicle.status|capitalize }}
+                    </span>
+                    <span class="badge {% if vehicle.is_resident %}bg-info{% else %}bg-secondary{% endif %} ms-1">
+                        {% if vehicle.is_resident %}Resident{% else %}Visitor{% endif %}
+                    </span>
+                </div>
+                <div class="col-md-9">
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <strong>Owner Name:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ vehicle.owner_name or 'Not specified' }}
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <strong>Owner Phone:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ vehicle.owner_phone or 'Not specified' }}
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <strong>Vehicle Type:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ vehicle.vehicle_type or 'Unknown' }}
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <strong>MyGate ID:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ vehicle.mygate_id or 'Not linked' }}
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <strong>Notes:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ vehicle.notes or 'No notes' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Card -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('dashboard.vehicle_logs', vehicle_id=vehicle.id) }}" class="row g-3">
+                <div class="col-md-3">
+                    <select class="form-select" id="event_type" name="event_type">
+                        <option value="" {% if not event_type %}selected{% endif %}>All Events</option>
+                        <option value="entry" {% if event_type == 'entry' %}selected{% endif %}>Entry</option>
+                        <option value="exit" {% if event_type == 'exit' %}selected{% endif %}>Exit</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="status" name="status">
+                        <option value="" {% if not status %}selected{% endif %}>All Status</option>
+                        <option value="success" {% if status == 'success' %}selected{% endif %}>Success</option>
+                        <option value="error" {% if status == 'error' %}selected{% endif %}>Error</option>
+                        <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="date" class="form-control" id="start_date" name="start_date" placeholder="Start Date" value="{{ start_date }}">
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <input type="date" class="form-control" id="end_date" name="end_date" placeholder="End Date" value="{{ end_date }}">
+                        <button type="submit" class="btn btn-primary">Filter</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">Event History</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0 events-table">
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>Timestamp</th>
+                            <th>Confidence</th>
+                            <th>MyGate</th>
+                            <th>Status</th>
+                            <th>Image</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if logs %}
+                            {% for log in logs %}
+                            <tr>
+                                <td>
+                                    <span class="badge {% if log.event_type == 'entry' %}entry-badge{% else %}exit-badge{% endif %}">
+                                        {{ log.event_type|capitalize }}
+                                    </span>
+                                </td>
+                                <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                <td>
+                                    <span class="{{ utils.get_confidence_color(log.confidence) }}">
+                                        {{ "%.2f"|format(log.confidence * 100) if log.confidence else 'N/A' }}%
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if log.processed_by_mygate %}
+                                    <span class="badge bg-success">Processed</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Not Processed</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if log.status == 'success' else 'danger' if log.status == 'error' else 'warning' }}">
+                                        {{ log.status|capitalize }}
+                                    </span>
+                                    {% if log.error_message %}
+                                    <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1" 
+                                            data-bs-toggle="popover" data-bs-trigger="hover focus" 
+                                            data-bs-title="Error Details" data-bs-content="{{ log.error_message }}">
+                                        <i class="bi bi-info-circle"></i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if log.image_path %}
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#imagePreviewModal" 
+                                       data-bs-image-url="{{ url_for('static', filename=log.image_path.replace('static/', '')) }}"
+                                       data-bs-license-plate="{{ log.license_plate }}"
+                                       data-bs-timestamp="{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}">
+                                        <img src="{{ url_for('static', filename=log.image_path.replace('static/', '')) }}" 
+                                             alt="{{ log.license_plate }}" width="60" height="40" class="rounded">
+                                    </a>
+                                    {% else %}
+                                    <span class="badge bg-secondary">No image</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">No logs found for this vehicle</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if pagination and pagination.pages > 1 %}
+        <div class="card-footer">
+            <nav aria-label="Logs pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item {% if pagination.page == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=pagination.page-1, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">Previous</a>
+                    </li>
+                    
+                    {% for page_num in range(max(1, pagination.page - 2), min(pagination.pages + 1, pagination.page + 3)) %}
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=page_num, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">{{ page_num }}</a>
+                    </li>
+                    {% endfor %}
+                    
+                    <li class="page-item {% if pagination.page == pagination.pages %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=pagination.page+1, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Activity Statistics -->
+    <div class="card mt-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Activity Statistics</h5>
+        </div>
+        <div class="card-body">
+            <!-- Visualize entries and exits -->
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <h6>Time of Day Distribution</h6>
+                    <div style="height: 200px;">
+                        <canvas id="timeDistributionChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <h6>Weekly Activity</h6>
+                    <div style="height: 200px;">
+                        <canvas id="weeklyActivityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stats summary -->
+            <div class="row mt-2">
+                <div class="col-md-3 mb-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h6>Total Entries</h6>
+                            <p class="h3">{{ logs|selectattr('event_type', 'equalto', 'entry')|list|length }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h6>Total Exits</h6>
+                            <p class="h3">{{ logs|selectattr('event_type', 'equalto', 'exit')|list|length }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h6>Avg. Confidence</h6>
+                            {% set confidence_values = logs|map(attribute='confidence')|reject('none')|list %}
+                            {% if confidence_values|length > 0 %}
+                                {% set avg_confidence = (confidence_values|sum / confidence_values|length * 100)|round(1) %}
+                            {% else %}
+                                {% set avg_confidence = 0 %}
+                            {% endif %}
+                            <p class="h3">{{ avg_confidence }}%</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h6>First Seen</h6>
+                            {% if logs %}
+                                {% set first_log = logs|sort(attribute='timestamp')|first %}
+                                <p class="h3">{{ first_log.timestamp.strftime('%Y-%m-%d') }}</p>
+                            {% else %}
+                                <p class="h3">N/A</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default dates if not set
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    
+    if (startDateInput && !startDateInput.value) {
+        // Default to 30 days ago
+        const defaultStart = new Date();
+        defaultStart.setDate(defaultStart.getDate() - 30);
+        startDateInput.value = defaultStart.toISOString().split('T')[0];
+    }
+    
+    if (endDateInput && !endDateInput.value) {
+        // Default to today
+        const today = new Date();
+        endDateInput.value = today.toISOString().split('T')[0];
+    }
+    
+    // Sample data for charts - in a real application, this would come from the backend
+    // Time of Day Distribution Chart
+    const timeDistributionCtx = document.getElementById('timeDistributionChart');
+    if (timeDistributionCtx) {
+        new Chart(timeDistributionCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Morning (6-12)', 'Afternoon (12-18)', 'Evening (18-24)', 'Night (0-6)'],
+                datasets: [
+                    {
+                        label: 'Entries',
+                        data: [8, 5, 12, 2],
+                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                        borderColor: 'rgb(40, 167, 69)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Exits',
+                        data: [3, 7, 10, 4],
+                        backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                        borderColor: 'rgb(220, 53, 69)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+    
+    // Weekly Activity Chart
+    const weeklyActivityCtx = document.getElementById('weeklyActivityChart');
+    if (weeklyActivityCtx) {
+        new Chart(weeklyActivityCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Activity',
+                    data: [5, 8, 6, 9, 12, 7, 4],
+                    borderColor: 'rgb(13, 110, 253)',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
