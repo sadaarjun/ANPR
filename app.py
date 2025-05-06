@@ -104,8 +104,8 @@ def create_app():
         app.config['USING_MOCKS'] = True
     
     # Initialize the configuration
-    config = Config()
-    app.config['SYSTEM_CONFIG'] = config
+    # We'll initialize the config after we have an application context
+    app.config['SYSTEM_CONFIG'] = None
     
     # Make current_user available to templates
     @app.context_processor
@@ -133,9 +133,14 @@ def create_app():
             logging.error(f"Error creating admin user: {str(e)}")
     
     # Initialize the camera manager and ANPR processor
-    def initialize_system(app, config):
+    def initialize_system(app):
         global camera_manager, anpr_processor
         try:
+            # Initialize the configuration
+            from config import Config
+            config = Config()
+            app.config['SYSTEM_CONFIG'] = config
+
             # Initialize the camera manager
             camera_manager = CameraManager(config)
             
@@ -156,12 +161,10 @@ def create_app():
         except Exception as e:
             logging.error(f"Failed to initialize ANPR system: {str(e)}")
     
-    # Create admin user
+    # Create admin user and initialize system
     with app.app_context():
         create_admin_user(app)
-    
-    # Initialize the system if not running in debug mode
-    if not app.debug:
-        initialize_system(app, config)
+        # Initialize system components
+        initialize_system(app)
     
     return app
