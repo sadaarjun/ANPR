@@ -24,7 +24,7 @@
                     </div>
                 </div>
                 <div class="col-md-8">
-                    <form method="POST" action="{{ url_for('auth.profile') }}">
+                    <form method="POST" action="{{ url_with_token('auth.profile') }}">
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
                             <input type="text" class="form-control" id="username" value="{{ current_user.username }}" disabled>
@@ -73,10 +73,10 @@
         <div class="card-body">
             <p>As an administrator, you have access to additional system management features:</p>
             <div class="d-grid gap-2 d-md-flex">
-                <a href="{{ url_for('dashboard.settings') }}" class="btn btn-outline-primary">
+                <a href="{{ url_with_token('dashboard.settings') }}" class="btn btn-outline-primary">
                     <i class="bi bi-gear me-2"></i>System Settings
                 </a>
-                <a href="{{ url_for('auth.users') }}" class="btn btn-outline-danger">
+                <a href="{{ url_with_token('auth.users') }}" class="btn btn-outline-danger">
                     <i class="bi bi-people me-2"></i>User Management
                 </a>
             </div>

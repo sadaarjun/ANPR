@@ -78,7 +78,7 @@
     <!-- Search and Filter Card -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ url_for('dashboard.vehicle_logs', vehicle_id=vehicle.id) }}" class="row g-3">
+            <form method="GET" action="{{ url_with_token('dashboard.vehicle_logs', vehicle_id=vehicle.id) }}" class="row g-3">
                 <div class="col-md-3">
                     <select class="form-select" id="event_type" name="event_type">
                         <option value="" {% if not event_type %}selected{% endif %}>All Events</option>
