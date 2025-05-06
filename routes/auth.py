@@ -16,6 +16,10 @@ except ImportError:
         session['user_id'] = user.id
         session['username'] = user.username
         session['is_admin'] = user.is_admin
+        # Make sure the session is saved properly
+        session.modified = True
+        # Force set session permanency based on remember flag
+        session.permanent = remember
         return True
     
     def logout_user():
@@ -31,6 +35,7 @@ except ImportError:
                 return redirect(url_for('auth.login', next=request.url))
             return f(*args, **kwargs)
         decorated_function.__name__ = f.__name__
+        decorated_function.__module__ = f.__module__
         return decorated_function
     
     # Create a placeholder current_user object

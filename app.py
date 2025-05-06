@@ -1,5 +1,6 @@
 import os
 import logging
+import tempfile
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import threading
@@ -16,6 +17,9 @@ def create_app():
     # Set up the Flask application
     app = Flask(__name__)
     app.secret_key = os.environ.get("SESSION_SECRET", "anpr_secret_key")
+    # Configure session
+    from datetime import timedelta
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)  # 24 hours
     
     # Configure the database - use PostgreSQL in production, SQLite for development
     database_url = os.environ.get("DATABASE_URL", "sqlite:///anpr.db")
