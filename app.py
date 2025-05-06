@@ -26,6 +26,9 @@ def create_app():
     app.config['SESSION_COOKIE_PATH'] = '/'  # Allow cookies for all paths
     app.config['SESSION_COOKIE_NAME'] = 'anpr_session'  # Custom session cookie name
     
+    # Increase logging level for debugging
+    app.logger.setLevel(logging.DEBUG)
+    
     # Set session key prefix
     app.config['SESSION_KEY_PREFIX'] = 'anpr_sess:'
     

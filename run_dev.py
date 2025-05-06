@@ -11,6 +11,6 @@ app = create_app()
 
 # Run the app with a single worker (for testing session issues)
 if __name__ == "__main__":
-    # Get port from environment or use default
-    port = int(os.environ.get("PORT", 5000))
+    # Use a different port (5001) since 5000 is already in use
+    port = int(os.environ.get("PORT", 5001))
     app.run(host="0.0.0.0", port=port, debug=True)
