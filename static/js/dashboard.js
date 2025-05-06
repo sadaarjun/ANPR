@@ -1,5 +1,20 @@
 // Dashboard JavaScript functions
 
+// Helper function to get authentication token from URL
+function getAuthToken() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('token');
+}
+
+// Helper function to add token to API endpoint URLs
+function getApiUrl(endpoint) {
+    const token = getAuthToken();
+    if (token) {
+        return `${endpoint}${endpoint.includes('?') ? '&' : '?'}token=${token}`;
+    }
+    return endpoint;
+}
+
 // DOM elements will be loaded once the document is ready
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize recurring log updates
@@ -23,7 +38,7 @@ function initializeLogUpdates() {
     if (recentLogsContainer) {
         // Set up recurring fetch of log data
         function refreshLogs() {
-            fetch('/api/logs/recent?limit=10')
+            fetch(getApiUrl('/api/logs/recent?limit=10'))
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -51,7 +66,7 @@ function initializeAnprToggle() {
             const isRunning = anprToggleBtn.classList.contains('btn-danger');
             const url = isRunning ? '/api/anpr/stop' : '/api/anpr/start';
             
-            fetch(url, {
+            fetch(getApiUrl(url), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -146,7 +161,7 @@ function initializeCharts() {
  */
 function initializeTrafficChart() {
     // Fetch traffic data from API
-    fetch('/api/stats/daily_traffic')
+    fetch(getApiUrl('/api/stats/daily_traffic'))
         .then(response => response.json())
         .then(data => {
             if (!data.success) return;
@@ -197,7 +212,7 @@ function initializeTrafficChart() {
  */
 function initializeAccuracyChart() {
     // Fetch accuracy data from API
-    fetch('/api/stats/recognition_accuracy')
+    fetch(getApiUrl('/api/stats/recognition_accuracy'))
         .then(response => response.json())
         .then(data => {
             if (!data.success) return;
