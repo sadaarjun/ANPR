@@ -180,8 +180,15 @@ except ImportError:
         """Generate a URL with the auth token appended if available"""
         url = url_for(endpoint, **values)
         
-        # Check if we have an auth token in the session
-        if 'auth_token' in session:
+        # Make sure we have a request context
+        from flask import has_request_context
+        
+        # First check if we have an auth token in the URL parameters
+        if has_request_context() and request.args.get('token'):
+            token = request.args.get('token')
+            url += ('&' if '?' in url else '?') + 'token=' + token
+        # Otherwise check if we have an auth token in the session
+        elif session and 'auth_token' in session and session['auth_token'] is not None:
             url += ('&' if '?' in url else '?') + 'token=' + session['auth_token']
         
         return url
