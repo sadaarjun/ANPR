@@ -67,33 +67,48 @@ except ImportError:
             try:
                 # Get the auth cookie name from config
                 auth_cookie_name = current_app.config.get('AUTH_COOKIE_NAME', 'anpr_auth')
+                
+                # Debug all cookies
+                logging.debug(f"All cookies: {request.cookies}")
+                
                 auth_token = request.cookies.get(auth_cookie_name)
                 
                 if auth_token:
                     # We have an auth token, try to decode it
                     logging.debug(f"Found auth token cookie: {auth_token[:20]}...")
-                    token_data = json.loads(base64.b64decode(auth_token).decode())
-                    
-                    # Check if token is not expired (7 days)
-                    import time
-                    now = time.time()
-                    if now - token_data.get('timestamp', 0) <= 60*60*24*7:  # 7 days in seconds
-                        # Token is valid, reconstruct the session
-                        session['user_id'] = token_data.get('id')
-                        session['username'] = token_data.get('username')
-                        session['is_admin'] = token_data.get('is_admin')
-                        session['authenticated'] = True
-                        session['login_timestamp'] = token_data.get('timestamp')
+                    try:
+                        # Debug each step of the decode process
+                        decoded_bytes = base64.b64decode(auth_token)
+                        logging.debug(f"Base64 decoded: {decoded_bytes[:50]}")
                         
-                        # Make sure the session is saved
-                        session.modified = True
+                        decoded_str = decoded_bytes.decode()
+                        logging.debug(f"String decoded: {decoded_str[:50]}")
                         
-                        logging.debug(f"Authentication successful for user_id={session['user_id']} via auth token")
-                        return f(*args, **kwargs)
-                    else:
-                        logging.warning(f"Auth token expired at {request.path}")
+                        token_data = json.loads(decoded_str)
+                        logging.debug(f"JSON parsed: {token_data}")
+                        
+                        # Check if token is not expired (7 days)
+                        import time
+                        now = time.time()
+                        if now - token_data.get('timestamp', 0) <= 60*60*24*7:  # 7 days in seconds
+                            # Token is valid, reconstruct the session
+                            session['user_id'] = token_data.get('id')
+                            session['username'] = token_data.get('username')
+                            session['is_admin'] = token_data.get('is_admin')
+                            session['authenticated'] = True
+                            session['login_timestamp'] = token_data.get('timestamp')
+                            
+                            # Make sure the session is saved
+                            session.modified = True
+                            
+                            logging.debug(f"Authentication successful for user_id={session['user_id']} via auth token")
+                            return f(*args, **kwargs)
+                        else:
+                            logging.warning(f"Auth token expired at {request.path}")
+                    except Exception as inner_e:
+                        logging.error(f"Error decoding token parts: {str(inner_e)}")
             except Exception as e:
-                logging.error(f"Error processing auth token: {str(e)}")
+                logging.error(f"Error processing auth token: {str(e)}", exc_info=True)
             
             # If we get here, authentication failed
             logging.warning(f"Authentication failed at {request.path} - No valid auth method found")
