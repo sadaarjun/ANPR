@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - ANPR System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>System Status</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card mb-3 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <div class="d-inline-block p-3 rounded-circle mb-3 bg-{{ 'success' if anpr_status else 'danger' }}">
+                                    <i class="fas fa-video fa-2x text-white"></i>
+                                </div>
+                                <h5>ANPR Service</h5>
+                                <p class="text-{{ 'success' if anpr_status else 'danger' }} mb-0">
+                                    {{ 'Running' if anpr_status else 'Stopped' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card mb-3 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <div class="d-inline-block p-3 rounded-circle mb-3 bg-{{ 'success' if camera_status else 'danger' }}">
+                                    <i class="fas fa-camera fa-2x text-white"></i>
+                                </div>
+                                <h5>Camera</h5>
+                                <p class="text-{{ 'success' if camera_status else 'danger' }} mb-0">
+                                    {{ 'Connected' if camera_status else 'Disconnected' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card mb-3 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <div class="d-inline-block p-3 rounded-circle mb-3 bg-{{ 'success' if mygate_status else 'warning' }}">
+                                    <i class="fas fa-sync-alt fa-2x text-white"></i>
+                                </div>
+                                <h5>MyGate API</h5>
+                                <p class="text-{{ 'success' if mygate_status else 'warning' }} mb-0">
+                                    {{ 'Connected' if mygate_status else 'Not Configured' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card mb-3 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <div class="d-inline-block p-3 rounded-circle mb-3 bg-info">
+                                    <i class="fas fa-database fa-2x text-white"></i>
+                                </div>
+                                <h5>Database</h5>
+                                <p class="text-info mb-0">
+                                    {{ stats.total_logs|default(0) }} Records
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0"><i class="fas fa-list-alt me-2"></i>Recent Activity</h4>
+                <a href="{{ url_for('dashboard.logs') }}" class="btn btn-sm btn-light">View All</a>
+            </div>
+            <div class="card-body table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>License Plate</th>
+                            <th>Event</th>
+                            <th>Timestamp</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if recent_logs %}
+                            {% for log in recent_logs %}
+                                <tr>
+                                    <td><strong>{{ log.license_plate }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if log.event_type == 'entry' else 'warning' }}">
+                                            {{ log.event_type|title }}
+                                        </span>
+                                    </td>
+                                    <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if log.status == 'success' else ('danger' if log.status == 'error' else 'secondary') }}">
+                                            {{ log.status|title }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center">No recent activities</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Today's Traffic</h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <div class="card text-center border-0 shadow-sm">
+                            <div class="card-body">
+                                <h1 class="display-4 text-success">{{ stats.today_entries|default(0) }}</h1>
+                                <p class="mb-0">Entries</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card text-center border-0 shadow-sm">
+                            <div class="card-body">
+                                <h1 class="display-4 text-warning">{{ stats.today_exits|default(0) }}</h1>
+                                <p class="mb-0">Exits</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h5>System Stats</h5>
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <p class="small text-muted mb-0">Total Vehicles</p>
+                            <h5>{{ stats.total_vehicles|default(0) }}</h5>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <p class="small text-muted mb-0">Resident Vehicles</p>
+                            <h5>{{ stats.resident_vehicles|default(0) }}</h5>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <p class="small text-muted mb-0">Success Rate</p>
+                            <h5>{{ (stats.success_count / stats.total_logs * 100)|round|int if stats.total_logs else 0 }}%</h5>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <p class="small text-muted mb-0">Disk Usage</p>
+                            <h5>{{ stats.disk_usage.percent_used|default(0) }}%</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-camera me-2"></i>Camera Feed</h4>
+            </div>
+            <div class="card-body text-center">
+                {% if camera_image %}
+                    <img src="{{ camera_image }}" class="img-fluid rounded" alt="Camera Feed">
+                    <p class="small text-muted mt-2">Last captured image</p>
+                {% else %}
+                    <div class="p-5 bg-light rounded">
+                        <i class="fas fa-camera-slash fa-4x text-muted mb-3"></i>
+                        <h5>Camera Not Available</h5>
+                        <p class="text-muted">Connect a camera to view the live feed.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-cogs me-2"></i>System Configuration</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">MyGate Community ID</label>
+                            <input type="text" class="form-control" value="{{ community_id }}" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">MyGate Device ID</label>
+                            <input type="text" class="form-control" value="{{ device_id }}" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Camera Resolution</label>
+                            <input type="text" class="form-control" value="{{ camera_resolution }}" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Processing Interval</label>
+                            <input type="text" class="form-control" value="{{ processing_interval }} seconds" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Log Retention</label>
+                            <input type="text" class="form-control" value="{{ log_retention }} days" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">System Controls</label>
+                            <div class="d-grid gap-2">
+                                <button id="anprToggleBtn" class="btn {{ 'btn-danger' if anpr_status else 'btn-success' }}">
+                                    <i class="fas {{ 'fa-stop' if anpr_status else 'fa-play' }} me-1"></i>
+                                    {{ 'Stop' if anpr_status else 'Start' }} ANPR
+                                </button>
+                                <a href="{{ url_for('dashboard.settings') }}" class="btn btn-primary">
+                                    <i class="fas fa-cogs me-1"></i> Configure
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const anprToggleBtn = document.getElementById('anprToggleBtn');
+        
+        if (anprToggleBtn) {
+            anprToggleBtn.addEventListener('click', function() {
+                const isRunning = anprToggleBtn.classList.contains('btn-danger');
+                const url = isRunning ? '/api/anpr/stop' : '/api/anpr/start';
+                
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert(data.message, 'success');
+                        
+                        // Update button state
+                        if (isRunning) {
+                            anprToggleBtn.classList.remove('btn-danger');
+                            anprToggleBtn.classList.add('btn-success');
+                            anprToggleBtn.innerHTML = '<i class="fas fa-play me-1"></i> Start ANPR';
+                        } else {
+                            anprToggleBtn.classList.remove('btn-success');
+                            anprToggleBtn.classList.add('btn-danger');
+                            anprToggleBtn.innerHTML = '<i class="fas fa-stop me-1"></i> Stop ANPR';
+                        }
+                        
+                        // Refresh page after short delay
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    } else {
+                        showAlert(data.message, 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Error communicating with server', 'danger');
+                });
+            });
+        }
+        
+        // Auto-refresh if enabled
+        {% if auto_refresh %}
+        const refreshInterval = {{ refresh_interval|default(30) }} * 1000; // Convert to milliseconds
+        setTimeout(function() {
+            window.location.reload();
+        }, refreshInterval);
+        {% endif %}
+    });
+    
+    function showAlert(message, type) {
+        const alertContainer = document.createElement('div');
+        alertContainer.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+        alertContainer.style.zIndex = '9999';
+        alertContainer.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.body.appendChild(alertContainer);
+        
+        // Auto dismiss after 5 seconds
+        setTimeout(() => {
+            alertContainer.remove();
+        }, 5000);
+    }
+</script>
+{% endblock %}

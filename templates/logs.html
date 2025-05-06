@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Logs - ANPR System{% endblock %}
+
+{% block content %}
+<div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-list-ul me-2"></i>Logs</h1>
+        <div>
+            <button type="button" class="btn btn-outline-secondary" id="refreshLogsBtn">
+                <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Search and Filter Card -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('dashboard.logs') }}" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" id="search" name="search" placeholder="Search by license plate..." value="{{ search }}">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="event_type" name="event_type">
+                        <option value="" {% if not event_type %}selected{% endif %}>All Events</option>
+                        <option value="entry" {% if event_type == 'entry' %}selected{% endif %}>Entry</option>
+                        <option value="exit" {% if event_type == 'exit' %}selected{% endif %}>Exit</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="status" name="status">
+                        <option value="" {% if not status %}selected{% endif %}>All Status</option>
+                        <option value="success" {% if status == 'success' %}selected{% endif %}>Success</option>
+                        <option value="error" {% if status == 'error' %}selected{% endif %}>Error</option>
+                        <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="date" class="form-control" id="start_date" name="start_date" placeholder="Start Date" value="{{ start_date }}">
+                </div>
+                <div class="col-md-2">
+                    <div class="input-group">
+                        <input type="date" class="form-control" id="end_date" name="end_date" placeholder="End Date" value="{{ end_date }}">
+                        <button type="submit" class="btn btn-primary">Filter</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">Event Logs</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0 events-table">
+                    <thead>
+                        <tr>
+                            <th>License Plate</th>
+                            <th>Event</th>
+                            <th>Timestamp</th>
+                            <th>Confidence</th>
+                            <th>Owner</th>
+                            <th>Status</th>
+                            <th>Image</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if logs %}
+                            {% for log in logs %}
+                            <tr>
+                                <td>
+                                    <span class="license-plate">{{ log.license_plate }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge {% if log.event_type == 'entry' %}entry-badge{% else %}exit-badge{% endif %}">
+                                        {{ log.event_type|capitalize }}
+                                    </span>
+                                </td>
+                                <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                <td>
+                                    <span class="{{ utils.get_confidence_color(log.confidence) }}">
+                                        {{ "%.2f"|format(log.confidence * 100) if log.confidence else 'N/A' }}%
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if log.vehicle_id and vehicles and log.vehicle_id in vehicles %}
+                                        {{ vehicles[log.vehicle_id].owner_name or 'Unknown' }}
+                                    {% else %}
+                                        Unknown
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if log.status == 'success' else 'danger' if log.status == 'error' else 'warning' }}">
+                                        {{ log.status|capitalize }}
+                                    </span>
+                                    {% if log.error_message %}
+                                    <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1" 
+                                            data-bs-toggle="popover" data-bs-trigger="hover focus" 
+                                            data-bs-title="Error Details" data-bs-content="{{ log.error_message }}">
+                                        <i class="bi bi-info-circle"></i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if log.image_path %}
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#imagePreviewModal" 
+                                       data-bs-image-url="{{ url_for('static', filename=log.image_path.replace('static/', '')) }}"
+                                       data-bs-license-plate="{{ log.license_plate }}"
+                                       data-bs-timestamp="{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}">
+                                        <img src="{{ url_for('static', filename=log.image_path.replace('static/', '')) }}" 
+                                             alt="{{ log.license_plate }}" width="60" height="40" class="rounded">
+                                    </a>
+                                    {% else %}
+                                    <span class="badge bg-secondary">No image</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">No logs found matching the criteria</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if pagination and pagination.pages > 1 %}
+        <div class="card-footer">
+            <nav aria-label="Logs pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item {% if pagination.page == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('dashboard.logs', page=pagination.page-1, search=search, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">Previous</a>
+                    </li>
+                    
+                    {% for page_num in range(max(1, pagination.page - 2), min(pagination.pages + 1, pagination.page + 3)) %}
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('dashboard.logs', page=page_num, search=search, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">{{ page_num }}</a>
+                    </li>
+                    {% endfor %}
+                    
+                    <li class="page-item {% if pagination.page == pagination.pages %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('dashboard.logs', page=pagination.page+1, search=search, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Stats Card -->
+    <div class="card mt-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Statistics</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 mb-3 mb-md-0">
+                    <div class="card h-100 text-center">
+                        <div class="card-body">
+                            <h6 class="card-title">Today's Entries</h6>
+                            <p class="display-5">{{ logs|selectattr('event_type', 'equalto', 'entry')|selectattr('timestamp', 'ge', current_date|string + ' 00:00:00')|list|length }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3 mb-md-0">
+                    <div class="card h-100 text-center">
+                        <div class="card-body">
+                            <h6 class="card-title">Today's Exits</h6>
+                            <p class="display-5">{{ logs|selectattr('event_type', 'equalto', 'exit')|selectattr('timestamp', 'ge', current_date|string + ' 00:00:00')|list|length }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3 mb-md-0">
+                    <div class="card h-100 text-center">
+                        <div class="card-body">
+                            <h6 class="card-title">Success Rate</h6>
+                            {% set success_count = logs|selectattr('status', 'equalto', 'success')|list|length %}
+                            {% set total_count = logs|length %}
+                            {% if total_count > 0 %}
+                                {% set success_rate = (success_count / total_count * 100)|round(1) %}
+                            {% else %}
+                                {% set success_rate = 0 %}
+                            {% endif %}
+                            <p class="display-5">{{ success_rate }}%</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card h-100 text-center">
+                        <div class="card-body">
+                            <h6 class="card-title">Unique Vehicles</h6>
+                            <p class="display-5">{{ logs|map(attribute='license_plate')|unique|list|length }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up refresh button
+    const refreshBtn = document.getElementById('refreshLogsBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            location.reload();
+        });
+    }
+    
+    // Set default dates if not set
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    
+    if (startDateInput && !startDateInput.value) {
+        // Default to 7 days ago
+        const defaultStart = new Date();
+        defaultStart.setDate(defaultStart.getDate() - 7);
+        startDateInput.value = defaultStart.toISOString().split('T')[0];
+    }
+    
+    if (endDateInput && !endDateInput.value) {
+        // Default to today
+        const today = new Date();
+        endDateInput.value = today.toISOString().split('T')[0];
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,118 @@
+/* Custom styles for ANPR System */
+
+/* Add some spacing between elements */
+body {
+    padding-bottom: 60px; /* To account for the fixed footer */
+}
+
+/* Improve card appearance */
+.card {
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* Add styling for status indicators */
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.status-online {
+    background-color: var(--bs-success);
+}
+
+.status-offline {
+    background-color: var(--bs-danger);
+}
+
+.status-warning {
+    background-color: var(--bs-warning);
+}
+
+/* Custom styling for the footer */
+footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    z-index: 100;
+}
+
+/* Improve table readability */
+.table th {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Customize badges */
+.badge {
+    font-weight: 500;
+    padding: 0.5em 0.8em;
+}
+
+/* Login page centered form */
+.login-form-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+}
+
+/* Custom styling for plates display */
+.license-plate {
+    font-family: monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 0.25rem 0.5rem;
+    border: 2px solid var(--bs-secondary);
+    border-radius: 4px;
+    background-color: var(--bs-light);
+    color: var(--bs-dark);
+}
+
+/* Make links in tables stand out more */
+.table tbody tr td a {
+    font-weight: 500;
+}
+
+/* Custom backdrop for modals */
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Add a subtle animation to alerts */
+.alert {
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Improve form controls */
+.form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Add custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+}

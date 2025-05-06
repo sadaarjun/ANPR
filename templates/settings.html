@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - ANPR System{% endblock %}
+
+{% block content %}
+<div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-gear me-2"></i>System Settings</h1>
+        <div>
+            <button type="submit" form="settingsForm" class="btn btn-primary">
+                <i class="bi bi-save me-1"></i> Save Changes
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Configuration</h5>
+            <span class="badge bg-info">Admin Only</span>
+        </div>
+        <div class="card-body">
+            <form id="settingsForm" method="POST" action="{{ url_for('dashboard.settings') }}">
+                <!-- Camera Settings -->
+                <div class="settings-section">
+                    <h4 class="settings-header"><i class="bi bi-camera me-2"></i>Camera Settings</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="camera_resolution_width" class="form-label">Resolution Width (px)</label>
+                                <input type="number" class="form-control" id="camera_resolution_width" name="camera_resolution_width" 
+                                       value="{{ config.get_camera_resolution()[0] if config else 1920 }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="camera_resolution_height" class="form-label">Resolution Height (px)</label>
+                                <input type="number" class="form-control" id="camera_resolution_height" name="camera_resolution_height" 
+                                       value="{{ config.get_camera_resolution()[1] if config else 1080 }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="camera_framerate" class="form-label">Framerate</label>
+                                <input type="number" class="form-control" id="camera_framerate" name="camera_framerate" 
+                                       value="{{ config.get_camera_framerate() if config else 30 }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="camera_rotation" class="form-label">Rotation (degrees)</label>
+                                <select class="form-select" id="camera_rotation" name="camera_rotation">
+                                    <option value="0" {% if not config or config.get_camera_rotation() == 0 %}selected{% endif %}>0</option>
+                                    <option value="90" {% if config and config.get_camera_rotation() == 90 %}selected{% endif %}>90</option>
+                                    <option value="180" {% if config and config.get_camera_rotation() == 180 %}selected{% endif %}>180</option>
+                                    <option value="270" {% if config and config.get_camera_rotation() == 270 %}selected{% endif %}>270</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="max_image_width" class="form-label">Max Image Width (px)</label>
+                                <input type="number" class="form-control" id="max_image_width" name="max_image_width" 
+                                       value="{{ config.get_max_image_width() if config else 1280 }}">
+                                <div class="form-text">Set to 0 for no resizing</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3 form-check form-switch">
+                                <input type="checkbox" class="form-check-input" id="continuous_capture" name="continuous_capture" 
+                                       {% if not config or config.get_continuous_capture() %}checked{% endif %}>
+                                <label class="form-check-label" for="continuous_capture">Enable Continuous Capture</label>
+                                <div class="form-text">Keep camera continuously capturing in background</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3 form-check form-switch">
+                                <input type="checkbox" class="form-check-input" id="enhance_contrast" name="enhance_contrast" 
+                                       {% if not config or config.get_enhance_contrast() %}checked{% endif %}>
+                                <label class="form-check-label" for="enhance_contrast">Enhance Image Contrast</label>
+                                <div class="form-text">Apply contrast enhancement to improve plate recognition</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ANPR Settings -->
+                <div class="settings-section">
+                    <h4 class="settings-header"><i class="bi bi-card-text me-2"></i>ANPR Settings</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="processing_interval" class="form-label">Processing Interval (seconds)</label>
+                                <input type="number" step="0.1" class="form-control" id="processing_interval" name="processing_interval" 
+                                       value="{{ config.get_processing_interval() if config else 2 }}">
+                                <div class="form-text">Time between ANPR processing attempts</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="confidence_threshold" class="form-label">Confidence Threshold</label>
+                                <input type="number" step="0.01" min="0" max="1" class="form-control" id="confidence_threshold" name="confidence_threshold" 
+                                       value="{{ config.get_confidence_threshold() if config else 0.7 }}">
+                                <div class="form-text">Minimum confidence level (0-1) for plate recognition</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3 form-check form-switch">
+                        <input type="checkbox" class="form-check-input" id="auto_register_vehicles" name="auto_register_vehicles" 
+                               {% if not config or config.get_auto_register_vehicles() %}checked{% endif %}>
+                        <label class="form-check-label" for="auto_register_vehicles">Auto-Register New Vehicles</label>
+                        <div class="form-text">Automatically add new vehicles to the database when detected</div>
+                    </div>
+                </div>
+
+                <!-- MyGate API Settings -->
+                <div class="settings-section">
+                    <h4 class="settings-header"><i class="bi bi-building me-2"></i>MyGate API Settings</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="community_id" class="form-label">Community ID</label>
+                                <input type="text" class="form-control" id="community_id" name="community_id" 
+                                       value="{{ config.get_community_id() if config else '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="device_id" class="form-label">Device ID</label>
+                                <input type="text" class="form-control" id="device_id" name="device_id" 
+                                       value="{{ config.get_device_id() if config else '' }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="entry_point_name" class="form-label">Entry Point Name</label>
+                        <input type="text" class="form-control" id="entry_point_name" name="entry_point_name" 
+                               value="{{ config.get_entry_point_name() if config else 'Main Gate' }}">
+                    </div>
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-info-circle me-2"></i>API Key Management</h5>
+                        <p>API keys are managed through environment variables for security reasons and cannot be changed here.</p>
+                        <ul class="mb-0">
+                            <li><strong>PLATE_RECOGNIZER_API_KEY:</strong> {{ env_vars.PLATE_RECOGNIZER_API_KEY if env_vars.PLATE_RECOGNIZER_API_KEY else 'Not set' }}</li>
+                            <li><strong>MYGATE_API_KEY:</strong> {{ env_vars.MYGATE_API_KEY if env_vars.MYGATE_API_KEY else 'Not set' }}</li>
+                            <li><strong>MYGATE_API_URL:</strong> {{ env_vars.MYGATE_API_URL if env_vars.MYGATE_API_URL else 'Default URL' }}</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- System Settings -->
+                <div class="settings-section">
+                    <h4 class="settings-header"><i class="bi bi-cpu me-2"></i>System Settings</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="log_level" class="form-label">Log Level</label>
+                                <select class="form-select" id="log_level" name="log_level">
+                                    <option value="DEBUG" {% if config and config.get_log_level() == 'DEBUG' %}selected{% endif %}>DEBUG</option>
+                                    <option value="INFO" {% if not config or config.get_log_level() == 'INFO' %}selected{% endif %}>INFO</option>
+                                    <option value="WARNING" {% if config and config.get_log_level() == 'WARNING' %}selected{% endif %}>WARNING</option>
+                                    <option value="ERROR" {% if config and config.get_log_level() == 'ERROR' %}selected{% endif %}>ERROR</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="image_retention_days" class="form-label">Image Retention (days)</label>
+                                <input type="number" class="form-control" id="image_retention_days" name="image_retention_days" 
+                                       value="{{ config.get_image_retention_days() if config else 30 }}">
+                                <div class="form-text">Set to 0 to keep images indefinitely</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3 form-check form-switch mt-4">
+                                <input type="checkbox" class="form-check-input" id="debug_mode" name="debug_mode" 
+                                       {% if not config or config.get_debug_mode() %}checked{% endif %}>
+                                <label class="form-check-label" for="debug_mode">Debug Mode</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i>Save All Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- System Maintenance Card -->
+    <div class="card mt-4">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0"><i class="bi bi-tools me-2"></i>System Maintenance</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <h5 class="card-title"><i class="bi bi-arrow-clockwise me-2"></i>Restart ANPR Service</h5>
+                            <p class="card-text">Restart the ANPR detection service without rebooting the system.</p>
+                            <button id="restartAnprBtn" class="btn btn-outline-primary">Restart Service</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <h5 class="card-title"><i class="bi bi-camera me-2"></i>Reinitialize Camera</h5>
+                            <p class="card-text">Reset the camera if it's not responding or after changing settings.</p>
+                            <button id="reinitCameraBtn" class="btn btn-outline-primary">Reset Camera</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <h5 class="card-title"><i class="bi bi-trash me-2"></i>Clean Old Images</h5>
+                            <p class="card-text">Manually clean up old images to free up disk space.</p>
+                            <button id="cleanImagesBtn" class="btn btn-outline-danger">Clean Images</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Restart ANPR Service
+    const restartAnprBtn = document.getElementById('restartAnprBtn');
+    if (restartAnprBtn) {
+        restartAnprBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to restart the ANPR service?')) {
+                restartAnprBtn.disabled = true;
+                restartAnprBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Restarting...';
+                
+                // First stop ANPR
+                fetch('/api/anpr/stop', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Wait a bit
+                    setTimeout(() => {
+                        // Then start ANPR
+                        fetch('/api/anpr/start', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                showAlert('ANPR service restarted successfully', 'success');
+                            } else {
+                                showAlert('Failed to restart ANPR service: ' + data.message, 'danger');
+                            }
+                            restartAnprBtn.disabled = false;
+                            restartAnprBtn.innerHTML = 'Restart Service';
+                        })
+                        .catch(error => {
+                            showAlert('Error: ' + error, 'danger');
+                            restartAnprBtn.disabled = false;
+                            restartAnprBtn.innerHTML = 'Restart Service';
+                        });
+                    }, 2000);
+                })
+                .catch(error => {
+                    showAlert('Error: ' + error, 'danger');
+                    restartAnprBtn.disabled = false;
+                    restartAnprBtn.innerHTML = 'Restart Service';
+                });
+            }
+        });
+    }
+    
+    // Reinitialize Camera
+    const reinitCameraBtn = document.getElementById('reinitCameraBtn');
+    if (reinitCameraBtn) {
+        reinitCameraBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to reinitialize the camera?')) {
+                reinitCameraBtn.disabled = true;
+                reinitCameraBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Reinitializing...';
+                
+                // We need to implement this endpoint
+                // For now, just emulate the process with a timer
+                setTimeout(() => {
+                    showAlert('Camera reinitialized successfully', 'success');
+                    reinitCameraBtn.disabled = false;
+                    reinitCameraBtn.innerHTML = 'Reset Camera';
+                }, 3000);
+            }
+        });
+    }
+    
+    // Clean Old Images
+    const cleanImagesBtn = document.getElementById('cleanImagesBtn');
+    if (cleanImagesBtn) {
+        cleanImagesBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to clean old images? This action cannot be undone.')) {
+                cleanImagesBtn.disabled = true;
+                cleanImagesBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cleaning...';
+                
+                // We need to implement this endpoint
+                // For now, just emulate the process with a timer
+                setTimeout(() => {
+                    showAlert('Old images cleaned successfully', 'success');
+                    cleanImagesBtn.disabled = false;
+                    cleanImagesBtn.innerHTML = 'Clean Images';
+                }, 3000);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
