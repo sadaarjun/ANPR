@@ -20,6 +20,7 @@ except ImportError:
         session.modified = True
         # Force set session permanency based on remember flag
         session.permanent = remember
+        logging.debug(f"Created session with user_id={user.id}, username={user.username}")
         return True
     
     def logout_user():
@@ -31,8 +32,11 @@ except ImportError:
     # Create a placeholder decorator
     def login_required(f):
         def decorated_function(*args, **kwargs):
+            logging.debug(f"Session content during auth check: {session}")
             if 'user_id' not in session:
+                logging.warning(f"Authentication failed at {request.path} - No user_id in session")
                 return redirect(url_for('auth.login', next=request.url))
+            logging.debug(f"Authentication successful for user_id={session['user_id']}")
             return f(*args, **kwargs)
         decorated_function.__name__ = f.__name__
         decorated_function.__module__ = f.__module__
@@ -68,6 +72,7 @@ def login():
     """User login route"""
     # If user is already authenticated, redirect to dashboard
     if current_user.is_authenticated:
+        logging.debug("User already authenticated, redirecting to dashboard")
         return redirect(url_for('dashboard.index'))
     
     if request.method == 'POST':
@@ -94,14 +99,28 @@ def login():
         user.last_login = datetime.utcnow()
         db.session.commit()
         
+        # Debug information for session
+        logging.debug(f"Session after login: {session}")
+        logging.debug(f"Is authenticated: {current_user.is_authenticated}")
+        
+        # Force save session
+        session.modified = True
+        
         # Log successful login
         logging.info(f"User {username} logged in successfully")
+        
+        # Create response with redirect
+        resp = redirect(url_for('dashboard.index'))
+        # Set session cookie explicitly
+        if not login_available:
+            logging.debug("Setting session cookie on response")
+            resp.set_cookie('session', request.cookies.get('session', ''), max_age=86400, path='/')
         
         # Redirect to the requested page or dashboard
         next_page = request.args.get('next')
         if next_page:
-            return redirect(next_page)
-        return redirect(url_for('dashboard.index'))
+            resp = redirect(next_page)
+        return resp
     
     # GET request - render login form
     return render_template('login.html', current_year=datetime.now().year)
