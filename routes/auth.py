@@ -114,17 +114,37 @@ def login():
         # Log successful login
         logging.info(f"User {username} logged in successfully")
         
+        # Debug the headers and cookies
+        logging.debug(f"Request cookies at login time: {request.cookies}")
+        
         # Create response with redirect
         resp = redirect(url_for('dashboard.index'))
-        # Set session cookie explicitly
+        
+        # Set session cookie explicitly with secure settings
+        from datetime import timedelta
+        logging.debug(f"Session cookie before setting: {session.get('user_id')}")
         if not login_available:
-            logging.debug("Setting session cookie on response")
-            resp.set_cookie('session', request.cookies.get('session', ''), max_age=86400, path='/')
+            cookie_val = request.cookies.get('session', '')
+            logging.debug(f"Setting session cookie on response: {cookie_val[:10]}...")
+            # Set the cookie with more explicit parameters
+            max_age = 86400 * 7  # 7 days in seconds
+            expires = datetime.utcnow() + timedelta(days=7)
+            resp.set_cookie(
+                'anpr_session',           # Use our custom cookie name
+                cookie_val,              # Use the value from the request
+                max_age=max_age,         # 7 days in seconds
+                expires=expires,         # Also set expires
+                path='/',                # Allow all paths
+                httponly=True,           # No JavaScript access
+                samesite='Lax',          # Allow redirects
+                secure=False             # Don't require HTTPS
+            )
         
         # Redirect to the requested page or dashboard
         next_page = request.args.get('next')
         if next_page:
             resp = redirect(next_page)
+        logging.debug(f"Final response to be returned: {resp}")
         return resp
     
     # GET request - render login form
@@ -138,7 +158,15 @@ def logout():
     logout_user()
     flash('You have been logged out successfully', 'success')
     logging.info(f"User {username} logged out")
-    return redirect(url_for('auth.login'))
+    
+    # Create response with redirect
+    resp = redirect(url_for('auth.login'))
+    
+    # Clear both session cookie and custom cookie
+    resp.delete_cookie('session')
+    resp.delete_cookie('anpr_session')
+    
+    return resp
 
 @auth_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
