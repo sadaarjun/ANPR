@@ -19,7 +19,7 @@
             <span class="badge bg-info">Admin Only</span>
         </div>
         <div class="card-body">
-            <form id="settingsForm" method="POST" action="{{ url_for('dashboard.settings') }}">
+            <form id="settingsForm" method="POST" action="{{ url_with_token('dashboard.settings') }}">
                 <!-- Camera Settings -->
                 <div class="settings-section">
                     <h4 class="settings-header"><i class="bi bi-camera me-2"></i>Camera Settings</h4>
@@ -235,6 +235,21 @@
 
 {% block scripts %}
 <script>
+// Helper function to get authentication token from URL
+function getAuthToken() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('token');
+}
+
+// Helper function to add token to API endpoint URLs
+function getApiUrl(endpoint) {
+    const token = getAuthToken();
+    if (token) {
+        return `${endpoint}${endpoint.includes('?') ? '&' : '?'}token=${token}`;
+    }
+    return endpoint;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Restart ANPR Service
     const restartAnprBtn = document.getElementById('restartAnprBtn');
@@ -245,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 restartAnprBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Restarting...';
                 
                 // First stop ANPR
-                fetch('/api/anpr/stop', {
+                fetch(getApiUrl('/api/anpr/stop'), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -256,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Wait a bit
                     setTimeout(() => {
                         // Then start ANPR
-                        fetch('/api/anpr/start', {
+                        fetch(getApiUrl('/api/anpr/start'), {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
