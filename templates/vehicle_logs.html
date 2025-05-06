@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1><i class="bi bi-car-front me-2"></i>Vehicle Logs</h1>
         <div>
-            <a href="{{ url_for('dashboard.vehicles') }}" class="btn btn-outline-primary">
+            <a href="{{ url_with_token('dashboard.vehicles') }}" class="btn btn-outline-primary">
                 <i class="bi bi-arrow-left me-1"></i> Back to Vehicles
             </a>
         </div>
@@ -189,17 +189,17 @@
             <nav aria-label="Logs pagination">
                 <ul class="pagination justify-content-center mb-0">
                     <li class="page-item {% if pagination.page == 1 %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=pagination.page-1, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">Previous</a>
+                        <a class="page-link" href="{{ url_with_token('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=pagination.page-1, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">Previous</a>
                     </li>
                     
                     {% for page_num in range(max(1, pagination.page - 2), min(pagination.pages + 1, pagination.page + 3)) %}
                     <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
-                        <a class="page-link" href="{{ url_for('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=page_num, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">{{ page_num }}</a>
+                        <a class="page-link" href="{{ url_with_token('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=page_num, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">{{ page_num }}</a>
                     </li>
                     {% endfor %}
                     
                     <li class="page-item {% if pagination.page == pagination.pages %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=pagination.page+1, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">Next</a>
+                        <a class="page-link" href="{{ url_with_token('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=pagination.page+1, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">Next</a>
                     </li>
                 </ul>
             </nav>
