@@ -25,6 +25,22 @@ except ImportError:
         # Force set session permanency based on remember flag
         session.permanent = True
         logging.debug(f"Created session with user_id={user.id}, username={user.username}")
+        
+        # Also store a cookie for auth verification
+        import json
+        import base64
+        # Create a token with user ID, username, is_admin, and timestamp
+        token_data = {
+            'id': user.id,
+            'username': user.username,
+            'is_admin': user.is_admin,
+            'timestamp': datetime.utcnow().timestamp()
+        }
+        # Convert to JSON and encode as base64
+        token_json = json.dumps(token_data)
+        token = base64.b64encode(token_json.encode()).decode()
+        # Set the auth_token value in the session
+        session['auth_token'] = token
         return True
     
     def logout_user():
@@ -37,12 +53,52 @@ except ImportError:
     # Create a placeholder decorator
     def login_required(f):
         def decorated_function(*args, **kwargs):
+            # Try to validate using the session first
             logging.debug(f"Session content during auth check: {session}")
-            if 'user_id' not in session:
-                logging.warning(f"Authentication failed at {request.path} - No user_id in session")
-                return redirect(url_for('auth.login', next=request.url))
-            logging.debug(f"Authentication successful for user_id={session['user_id']}")
-            return f(*args, **kwargs)
+            
+            # First check if we have a valid session
+            if 'user_id' in session:
+                logging.debug(f"Authentication successful for user_id={session['user_id']} via session")
+                return f(*args, **kwargs)
+            
+            # If not, check for our auth cookie
+            import json
+            import base64
+            try:
+                # Get the auth cookie name from config
+                auth_cookie_name = current_app.config.get('AUTH_COOKIE_NAME', 'anpr_auth')
+                auth_token = request.cookies.get(auth_cookie_name)
+                
+                if auth_token:
+                    # We have an auth token, try to decode it
+                    logging.debug(f"Found auth token cookie: {auth_token[:20]}...")
+                    token_data = json.loads(base64.b64decode(auth_token).decode())
+                    
+                    # Check if token is not expired (7 days)
+                    import time
+                    now = time.time()
+                    if now - token_data.get('timestamp', 0) <= 60*60*24*7:  # 7 days in seconds
+                        # Token is valid, reconstruct the session
+                        session['user_id'] = token_data.get('id')
+                        session['username'] = token_data.get('username')
+                        session['is_admin'] = token_data.get('is_admin')
+                        session['authenticated'] = True
+                        session['login_timestamp'] = token_data.get('timestamp')
+                        
+                        # Make sure the session is saved
+                        session.modified = True
+                        
+                        logging.debug(f"Authentication successful for user_id={session['user_id']} via auth token")
+                        return f(*args, **kwargs)
+                    else:
+                        logging.warning(f"Auth token expired at {request.path}")
+            except Exception as e:
+                logging.error(f"Error processing auth token: {str(e)}")
+            
+            # If we get here, authentication failed
+            logging.warning(f"Authentication failed at {request.path} - No valid auth method found")
+            return redirect(url_for('auth.login', next=request.url))
+        
         decorated_function.__name__ = f.__name__
         decorated_function.__module__ = f.__module__
         return decorated_function
@@ -120,35 +176,47 @@ def login():
         # Create response with redirect
         resp = redirect(url_for('dashboard.index'))
         
-        # Set session cookie explicitly with secure settings
+        # Set direct auth cookie with our token
         from datetime import timedelta
         logging.debug(f"Session cookie before setting: {session.get('user_id')}")
+        logging.debug(f"Auth token value: {session.get('auth_token')[:20]}...")
+        
+        # Get the auth cookie name from config
+        auth_cookie_name = current_app.config.get('AUTH_COOKIE_NAME', 'anpr_auth')
+        auth_cookie_duration = current_app.config.get('AUTH_COOKIE_DURATION', 60*60*24*7)  # 7 days
+        
+        # Set the auth token as a direct cookie
+        max_age = auth_cookie_duration
+        expires = datetime.utcnow() + timedelta(seconds=auth_cookie_duration)
+        resp.set_cookie(
+            auth_cookie_name,          # Use the auth cookie name
+            session['auth_token'],      # Use the auth token from the session
+            max_age=max_age,           # Cookie duration
+            expires=expires,           # Also set expires
+            path='/',                  # Allow all paths
+            httponly=True,             # Prevent JavaScript access
+            samesite='Lax',            # Allow redirects
+            secure=False               # Don't require HTTPS
+        )
+        
+        logging.debug(f"Set auth cookie '{auth_cookie_name}' with token value {session['auth_token'][:20]}...")
+        
+        # Also set the session cookie
         cookie_name = current_app.config.get('SESSION_COOKIE_NAME', 'session')
-        logging.debug(f"Using configured cookie name: {cookie_name}")
-        
-        # Get both the standard and custom cookie values
-        std_cookie = request.cookies.get('session', '')
-        custom_cookie = request.cookies.get(cookie_name, '')
-        logging.debug(f"Standard cookie value: {std_cookie[:5]}..., Custom cookie value: {custom_cookie[:5]}...")
-        
-        # Use the cookie value that's present, prefer the custom one
-        cookie_val = custom_cookie if custom_cookie else std_cookie
-        
-        if not login_available or True:  # Always set the cookie for now for debugging
-            logging.debug(f"Setting session cookie on response: {cookie_val[:10] if cookie_val else 'empty'}")
-            # Set the cookie with more explicit parameters
-            max_age = 86400 * 7  # 7 days in seconds
-            expires = datetime.utcnow() + timedelta(days=7)
-            resp.set_cookie(
-                cookie_name,              # Use the configured cookie name
-                cookie_val,               # Use the value from the request
-                max_age=max_age,          # 7 days in seconds
-                expires=expires,          # Also set expires
-                path='/',                 # Allow all paths
-                httponly=True,            # No JavaScript access
-                samesite='Lax',           # Allow redirects
-                secure=False              # Don't require HTTPS
-            )
+        if not login_available:
+            logging.debug(f"Setting session cookie '{cookie_name}' as a backup")
+            std_cookie = request.cookies.get('session', '')
+            if std_cookie:
+                resp.set_cookie(
+                    cookie_name,
+                    std_cookie,
+                    max_age=max_age,
+                    expires=expires,
+                    path='/',
+                    httponly=True,
+                    samesite='Lax',
+                    secure=False
+                )
         
         # Redirect to the requested page or dashboard
         next_page = request.args.get('next')
@@ -172,11 +240,13 @@ def logout():
     # Create response with redirect
     resp = redirect(url_for('auth.login'))
     
-    # Clear both session cookie and custom cookie
+    # Clear all cookies
     cookie_name = current_app.config.get('SESSION_COOKIE_NAME', 'session')
-    logging.debug(f"Deleting cookies: 'session' and '{cookie_name}'")
+    auth_cookie_name = current_app.config.get('AUTH_COOKIE_NAME', 'anpr_auth')
+    logging.debug(f"Deleting cookies: 'session', '{cookie_name}' and '{auth_cookie_name}'")
     resp.delete_cookie('session')
     resp.delete_cookie(cookie_name)
+    resp.delete_cookie(auth_cookie_name)
     
     return resp
 

@@ -26,6 +26,10 @@ def create_app():
     app.config['SESSION_COOKIE_PATH'] = '/'  # Allow cookies for all paths
     app.config['SESSION_COOKIE_NAME'] = 'anpr_session'  # Custom session cookie name
     
+    # Add a special key for direct authentication cookie
+    app.config['AUTH_COOKIE_NAME'] = 'anpr_auth'  # Auth token cookie name
+    app.config['AUTH_COOKIE_DURATION'] = 60 * 60 * 24 * 7  # 7 days in seconds
+    
     # Increase logging level for debugging
     app.logger.setLevel(logging.DEBUG)
     
