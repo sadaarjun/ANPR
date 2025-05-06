@@ -2,14 +2,8 @@ import os
 import json
 import logging
 
-# Import with try-except to handle circular imports
-try:
-    from models import Setting
-    from app import db
-    database_available = True
-except ImportError:
-    logging.warning("Database models not available for config. Using file-only mode.")
-    database_available = False
+# We'll import models and db within methods as needed to avoid circular imports
+database_available = True
 
 class Config:
     """Configuration manager for the ANPR system"""
@@ -55,6 +49,8 @@ class Config:
             # Try to load from database first if available
             if database_available:
                 try:
+                    from app import db
+                    from models import Setting
                     settings = Setting.query.all()
                     if settings:
                         # Configuration exists in database
@@ -113,6 +109,8 @@ class Config:
                     value_type = 'text'
                     value_str = str(value)
                 
+                from app import db
+                from models import Setting
                 # Check if the setting already exists
                 setting = Setting.query.filter_by(key=key).first()
                 if setting:
@@ -230,6 +228,8 @@ class Config:
     def update_setting(self, key, value):
         """Update a setting value"""
         try:
+            from app import db
+            from models import Setting
             # Update in the database
             setting = Setting.query.filter_by(key=key).first()
             if setting:
