@@ -5,6 +5,10 @@ from app import create_app
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
+# Set warning filter to show all warnings
+import warnings
+warnings.filterwarnings('always')
+
 # Create the Flask application
 app = create_app()
 
