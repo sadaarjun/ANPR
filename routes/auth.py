@@ -61,21 +61,23 @@ except ImportError:
                 logging.debug(f"Authentication successful for user_id={session['user_id']} via session")
                 return f(*args, **kwargs)
             
-            # If not, check for our auth cookie
+            # If not, check for our auth cookie or token in URL
             import json
             import base64
             try:
-                # Get the auth cookie name from config
+                # Get auth token from cookie or URL parameter
                 auth_cookie_name = current_app.config.get('AUTH_COOKIE_NAME', 'anpr_auth')
                 
-                # Debug all cookies
+                # Debug all cookies and query parameters
                 logging.debug(f"All cookies: {request.cookies}")
+                logging.debug(f"URL parameters: {request.args}")
                 
-                auth_token = request.cookies.get(auth_cookie_name)
+                # Try to get token from cookie or URL parameter
+                auth_token = request.cookies.get(auth_cookie_name) or request.args.get('token')
                 
                 if auth_token:
                     # We have an auth token, try to decode it
-                    logging.debug(f"Found auth token cookie: {auth_token[:20]}...")
+                    logging.debug(f"Found auth token: {auth_token[:20]}...")
                     try:
                         # Debug each step of the decode process
                         decoded_bytes = base64.b64decode(auth_token)
@@ -102,6 +104,13 @@ except ImportError:
                             session.modified = True
                             
                             logging.debug(f"Authentication successful for user_id={session['user_id']} via auth token")
+                            
+                            # Recreate current_user object for this request
+                            current_app.config['CURRENT_USER_ID'] = session['user_id']
+                            current_app.config['CURRENT_USER_USERNAME'] = session['username']
+                            current_app.config['CURRENT_USER_IS_ADMIN'] = session['is_admin']
+                            
+                            # Return the decorated function
                             return f(*args, **kwargs)
                         else:
                             logging.warning(f"Auth token expired at {request.path}")
@@ -122,21 +131,60 @@ except ImportError:
     class CurrentUser:
         @property
         def is_authenticated(self):
-            return 'user_id' in session
+            if 'user_id' in session:
+                return True
+            # Try to get from app config if set during token auth
+            try:
+                return current_app.config.get('CURRENT_USER_ID') is not None
+            except RuntimeError:
+                # If called outside app context
+                return False
         
         @property
         def is_admin(self):
-            return session.get('is_admin', False)
+            if 'is_admin' in session:
+                return session.get('is_admin', False)
+            # Try to get from app config if set during token auth
+            try:
+                return current_app.config.get('CURRENT_USER_IS_ADMIN', False)
+            except RuntimeError:
+                # If called outside app context
+                return False
         
         @property
         def username(self):
-            return session.get('username', '')
+            if 'username' in session:
+                return session.get('username', '')
+            # Try to get from app config if set during token auth
+            try:
+                return current_app.config.get('CURRENT_USER_USERNAME', '')
+            except RuntimeError:
+                # If called outside app context
+                return ''
         
         @property
         def id(self):
-            return session.get('user_id', None)
+            if 'user_id' in session:
+                return session.get('user_id', None)
+            # Try to get from app config if set during token auth
+            try:
+                return current_app.config.get('CURRENT_USER_ID')
+            except RuntimeError:
+                # If called outside app context
+                return None
     
     current_user = CurrentUser()
+    
+    # Function to generate URLs with the auth token appended
+    def url_with_token(endpoint, **values):
+        """Generate a URL with the auth token appended if available"""
+        url = url_for(endpoint, **values)
+        
+        # Check if we have an auth token in the session
+        if 'auth_token' in session:
+            url += ('&' if '?' in url else '?') + 'token=' + session['auth_token']
+        
+        return url
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -191,7 +239,7 @@ def login():
         # Create response with redirect
         resp = redirect(url_for('dashboard.index'))
         
-        # Set direct auth cookie with our token
+        # Add auth token to session and use URL parameters as a fallback
         from datetime import timedelta
         logging.debug(f"Session cookie before setting: {session.get('user_id')}")
         logging.debug(f"Auth token value: {session.get('auth_token')[:20]}...")
@@ -216,27 +264,34 @@ def login():
         
         logging.debug(f"Set auth cookie '{auth_cookie_name}' with token value {session['auth_token'][:20]}...")
         
-        # Also set the session cookie
+        # Also set the standard session cookie
         cookie_name = current_app.config.get('SESSION_COOKIE_NAME', 'session')
-        if not login_available:
+        std_cookie = request.cookies.get('session', '')
+        if std_cookie:
             logging.debug(f"Setting session cookie '{cookie_name}' as a backup")
-            std_cookie = request.cookies.get('session', '')
-            if std_cookie:
-                resp.set_cookie(
-                    cookie_name,
-                    std_cookie,
-                    max_age=max_age,
-                    expires=expires,
-                    path='/',
-                    httponly=True,
-                    samesite='Lax',
-                    secure=False
-                )
-        
-        # Redirect to the requested page or dashboard
+            resp.set_cookie(
+                cookie_name,
+                std_cookie,
+                max_age=max_age,
+                expires=expires,
+                path='/',
+                httponly=True,
+                samesite='Lax',
+                secure=False
+            )
+            
+        # Add an auth token as URL parameter as a fallback
+        # Redirect to dashboard with token parameter
         next_page = request.args.get('next')
+        
+        # Create a URL with a token parameter
+        url = url_for('dashboard.index', token=session['auth_token'])
         if next_page:
-            resp = redirect(next_page)
+            url = next_page + ('&' if '?' in next_page else '?') + 'token=' + session['auth_token']
+        
+        logging.debug(f"Redirecting to URL with token: {url[:50]}...")
+        resp = redirect(url)
+        
         logging.debug(f"Final response to be returned: {resp}")
         return resp
     

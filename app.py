@@ -130,7 +130,13 @@ def create_app():
     @app.context_processor
     def inject_user():
         from routes.auth import current_user
-        return {'current_user': current_user}
+        # Try to import the url_with_token function for linking with auth token
+        try:
+            from routes.auth import url_with_token
+            return {'current_user': current_user, 'url_with_token': url_with_token}
+        except ImportError:
+            # Fallback if not available
+            return {'current_user': current_user}
         
     # Add a before_request handler to initialize the session
     @app.before_request
