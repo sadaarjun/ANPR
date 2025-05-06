@@ -13,20 +13,24 @@ except ImportError:
     
     # Create placeholder functions
     def login_user(user, remember=False):
+        # Store user information in session
+        session.clear()  # Clear any existing session data
         session['user_id'] = user.id
         session['username'] = user.username
         session['is_admin'] = user.is_admin
+        session['authenticated'] = True
         # Make sure the session is saved properly
         session.modified = True
         # Force set session permanency based on remember flag
-        session.permanent = remember
+        session.permanent = True
         logging.debug(f"Created session with user_id={user.id}, username={user.username}")
         return True
     
     def logout_user():
-        session.pop('user_id', None)
-        session.pop('username', None)
-        session.pop('is_admin', None)
+        # Clear all session data
+        session.clear()
+        session.modified = True
+        logging.debug("Session cleared during logout")
         return True
     
     # Create a placeholder decorator

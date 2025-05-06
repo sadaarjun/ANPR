@@ -17,9 +17,13 @@ def create_app():
     # Set up the Flask application
     app = Flask(__name__)
     app.secret_key = os.environ.get("SESSION_SECRET", "anpr_secret_key")
-    # Configure session
+    # Configure session - needed for auth to work
     from datetime import timedelta
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)  # 24 hours
+    app.config['SESSION_COOKIE_SECURE'] = False  # Don't require HTTPS
+    app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Allow redirects with cookies
+    app.config['SESSION_COOKIE_PATH'] = '/'  # Allow cookies for all paths
     
     # Configure the database - use PostgreSQL in production, SQLite for development
     database_url = os.environ.get("DATABASE_URL", "sqlite:///anpr.db")
@@ -116,6 +120,21 @@ def create_app():
     def inject_user():
         from routes.auth import current_user
         return {'current_user': current_user}
+        
+    # Add a before_request handler to initialize the session
+    @app.before_request
+    def before_request():
+        from flask import session, request
+        import logging
+        # Log the session for debugging
+        if request.endpoint != 'static':
+            logging.debug(f"Session before request to {request.path}: {session}")
+            
+        # Make sure session is configured properly
+        if 'user_id' in session:
+            # Make the session permanent during each request
+            session.permanent = True
+            session.modified = True
     
     # Create an admin user if none exists
     def create_admin_user(app):
