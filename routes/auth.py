@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, session
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 from models import User
 from app import db
@@ -19,6 +19,7 @@ except ImportError:
         session['username'] = user.username
         session['is_admin'] = user.is_admin
         session['authenticated'] = True
+        session['login_timestamp'] = datetime.utcnow().timestamp()
         # Make sure the session is saved properly
         session.modified = True
         # Force set session permanency based on remember flag

@@ -25,34 +25,14 @@ except ImportError:
     
     user_mixin_base = UserMixinPlaceholder
 
-# Fix timedelta import
-from datetime import timedelta
-import secrets
-
 class User(user_mixin_base, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
-    auth_token = db.Column(db.String(64), unique=True, nullable=True)
-    token_expiration = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime)
-    
-    def generate_auth_token(self):
-        """Generate a secure token for user authentication"""
-        self.auth_token = secrets.token_hex(32)  # 64 character hex string
-        self.token_expiration = datetime.utcnow() + timedelta(days=7)
-        return self.auth_token
-        
-    @classmethod
-    def verify_auth_token(cls, token):
-        """Verify a token and return the associated user"""
-        user = cls.query.filter_by(auth_token=token).first()
-        if user and user.token_expiration and user.token_expiration > datetime.utcnow():
-            return user
-        return None
 
 class Vehicle(db.Model):
     id = db.Column(db.Integer, primary_key=True)
