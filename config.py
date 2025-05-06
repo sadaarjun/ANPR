@@ -49,9 +49,12 @@ class Config:
             # Try to load from database first if available
             if database_available:
                 try:
-                    from app import db
-                    from models import Setting
-                    settings = Setting.query.all()
+                    from flask import current_app
+                    # Import within application context
+                    with current_app.app_context():
+                        from app import db
+                        from models import Setting
+                        settings = Setting.query.all()
                     if settings:
                         # Configuration exists in database
                         self.config = self.default_config.copy()
@@ -93,6 +96,11 @@ class Config:
             return
         
         try:
+            # Import modules within the function to avoid circular imports
+            from flask import current_app
+            from app import db
+            from models import Setting
+            
             # Flatten the configuration dictionary
             flat_config = self.flatten_dict(self.config)
             
@@ -109,8 +117,6 @@ class Config:
                     value_type = 'text'
                     value_str = str(value)
                 
-                from app import db
-                from models import Setting
                 # Check if the setting already exists
                 setting = Setting.query.filter_by(key=key).first()
                 if setting:
@@ -257,6 +263,9 @@ class Config:
             
             return True
         except Exception as e:
-            db.session.rollback()
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
             logging.error(f"Error updating setting: {str(e)}")
             return False
