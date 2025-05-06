@@ -107,6 +107,12 @@ def create_app():
     config = Config()
     app.config['SYSTEM_CONFIG'] = config
     
+    # Make current_user available to templates
+    @app.context_processor
+    def inject_user():
+        from routes.auth import current_user
+        return {'current_user': current_user}
+    
     # Create an admin user if none exists
     def create_admin_user(app):
         from werkzeug.security import generate_password_hash
