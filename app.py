@@ -17,13 +17,16 @@ def create_app():
     # Set up the Flask application
     app = Flask(__name__)
     app.secret_key = os.environ.get("SESSION_SECRET", "anpr_secret_key")
-    # Configure session - needed for auth to work
+    # Configure session
     from datetime import timedelta
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)  # 24 hours
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # 7 days
     app.config['SESSION_COOKIE_SECURE'] = False  # Don't require HTTPS
     app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Allow redirects with cookies
     app.config['SESSION_COOKIE_PATH'] = '/'  # Allow cookies for all paths
+    
+    # Set session key prefix
+    app.config['SESSION_KEY_PREFIX'] = 'anpr_sess:'
     
     # Configure the database - use PostgreSQL in production, SQLite for development
     database_url = os.environ.get("DATABASE_URL", "sqlite:///anpr.db")
