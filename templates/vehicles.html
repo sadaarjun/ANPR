@@ -16,7 +16,7 @@
     <!-- Search and Filter Card -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ url_for('dashboard.vehicles') }}" class="row g-3">
+            <form method="GET" action="{{ url_with_token('dashboard.vehicles') }}" class="row g-3">
                 <div class="col-md-6">
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -102,7 +102,7 @@
                                                 data-bs-notes="{{ vehicle.notes or '' }}">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <a href="{{ url_for('dashboard.vehicle_logs', vehicle_id=vehicle.id) }}" class="btn btn-outline-info">
+                                        <a href="{{ url_with_token('dashboard.vehicle_logs', vehicle_id=vehicle.id) }}" class="btn btn-outline-info">
                                             <i class="bi bi-clock-history"></i>
                                         </a>
                                         <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteVehicleModal" 
@@ -128,17 +128,17 @@
             <nav aria-label="Vehicles pagination">
                 <ul class="pagination justify-content-center mb-0">
                     <li class="page-item {% if pagination.page == 1 %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('dashboard.vehicles', page=pagination.page-1, search=search, status=status, type=type) }}">Previous</a>
+                        <a class="page-link" href="{{ url_with_token('dashboard.vehicles', page=pagination.page-1, search=search, status=status, type=type) }}">Previous</a>
                     </li>
                     
                     {% for page_num in range(max(1, pagination.page - 2), min(pagination.pages + 1, pagination.page + 3)) %}
                     <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
-                        <a class="page-link" href="{{ url_for('dashboard.vehicles', page=page_num, search=search, status=status, type=type) }}">{{ page_num }}</a>
+                        <a class="page-link" href="{{ url_with_token('dashboard.vehicles', page=page_num, search=search, status=status, type=type) }}">{{ page_num }}</a>
                     </li>
                     {% endfor %}
                     
                     <li class="page-item {% if pagination.page == pagination.pages %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('dashboard.vehicles', page=pagination.page+1, search=search, status=status, type=type) }}">Next</a>
+                        <a class="page-link" href="{{ url_with_token('dashboard.vehicles', page=pagination.page+1, search=search, status=status, type=type) }}">Next</a>
                     </li>
                 </ul>
             </nav>
@@ -155,7 +155,7 @@
                 <h5 class="modal-title" id="addVehicleModalLabel">Add New Vehicle</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="POST" action="{{ url_for('dashboard.add_vehicle') }}">
+            <form method="POST" action="{{ url_with_token('dashboard.add_vehicle') }}">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="license_plate" class="form-label">License Plate *</label>
@@ -213,7 +213,7 @@
                 <h5 class="modal-title" id="editVehicleModalLabel">Edit Vehicle</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="POST" action="{{ url_for('dashboard.edit_vehicle') }}">
+            <form method="POST" action="{{ url_with_token('dashboard.edit_vehicle') }}">
                 <input type="hidden" id="edit_vehicle_id" name="vehicle_id">
                 <div class="modal-body">
                     <div class="mb-3">
@@ -276,7 +276,7 @@
                 <p>Are you sure you want to delete the vehicle with license plate <strong id="delete_license_plate"></strong>?</p>
                 <p class="text-danger">This action cannot be undone. All logs associated with this vehicle will remain in the database but will no longer be linked to a vehicle.</p>
             </div>
-            <form method="POST" action="{{ url_for('dashboard.delete_vehicle') }}">
+            <form method="POST" action="{{ url_with_token('dashboard.delete_vehicle') }}">
                 <input type="hidden" id="delete_vehicle_id" name="vehicle_id">
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

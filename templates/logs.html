@@ -16,7 +16,7 @@
     <!-- Search and Filter Card -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ url_for('dashboard.logs') }}" class="row g-3">
+            <form method="GET" action="{{ url_with_token('dashboard.logs') }}" class="row g-3">
                 <div class="col-md-4">
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -137,17 +137,17 @@
             <nav aria-label="Logs pagination">
                 <ul class="pagination justify-content-center mb-0">
                     <li class="page-item {% if pagination.page == 1 %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('dashboard.logs', page=pagination.page-1, search=search, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">Previous</a>
+                        <a class="page-link" href="{{ url_with_token('dashboard.logs', page=pagination.page-1, search=search, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">Previous</a>
                     </li>
                     
                     {% for page_num in range(max(1, pagination.page - 2), min(pagination.pages + 1, pagination.page + 3)) %}
                     <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
-                        <a class="page-link" href="{{ url_for('dashboard.logs', page=page_num, search=search, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">{{ page_num }}</a>
+                        <a class="page-link" href="{{ url_with_token('dashboard.logs', page=page_num, search=search, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">{{ page_num }}</a>
                     </li>
                     {% endfor %}
                     
                     <li class="page-item {% if pagination.page == pagination.pages %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('dashboard.logs', page=pagination.page+1, search=search, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">Next</a>
+                        <a class="page-link" href="{{ url_with_token('dashboard.logs', page=pagination.page+1, search=search, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">Next</a>
                     </li>
                 </ul>
             </nav>
