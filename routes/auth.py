@@ -29,18 +29,32 @@ except ImportError:
         # Also store a cookie for auth verification
         import json
         import base64
+        import os
+        
+        # Update the last_login time in the database
+        user.last_login = datetime.utcnow()
+        db.session.commit()
+        
         # Create a token with user ID, username, is_admin, and timestamp
         token_data = {
             'id': user.id,
             'username': user.username,
             'is_admin': user.is_admin,
-            'timestamp': datetime.utcnow().timestamp()
+            'timestamp': datetime.utcnow().timestamp(),
+            'random': os.urandom(8).hex()  # Add random component for uniqueness
         }
         # Convert to JSON and encode as base64
         token_json = json.dumps(token_data)
         token = base64.b64encode(token_json.encode()).decode()
         # Set the auth_token value in the session
         session['auth_token'] = token
+        
+        # Set global app config values as a fallback
+        current_app.config['CURRENT_USER_ID'] = user.id
+        current_app.config['CURRENT_USER_USERNAME'] = user.username
+        current_app.config['CURRENT_USER_IS_ADMIN'] = user.is_admin
+        
+        logging.debug(f"Generated auth token: {token[:20]}...")
         return True
     
     def logout_user():
@@ -313,6 +327,18 @@ def login():
         token_url = url_for('dashboard.index', token=session['auth_token'])
         if next_page:
             token_url = next_page + ('&' if '?' in next_page else '?') + 'token=' + session['auth_token']
+        
+        # Set the auth token as a direct cookie
+        resp.set_cookie(
+            auth_cookie_name,
+            session['auth_token'],
+            max_age=max_age,
+            expires=expires,
+            path='/',
+            httponly=True,
+            samesite='Lax',
+            secure=False
+        )
         
         logging.debug(f"Redirecting to URL with token: {token_url[:50]}...")
         
