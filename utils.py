@@ -118,6 +118,7 @@ def generate_system_stats():
 def get_disk_usage():
     """Get disk usage information"""
     try:
+        import shutil
         total, used, free = shutil.disk_usage("/")
         total_gb = total / (1024 ** 3)
         used_gb = used / (1024 ** 3)
