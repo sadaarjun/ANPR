@@ -251,8 +251,18 @@ def edit_vehicle():
         is_resident = True if request.form.get('is_resident') else False
         notes = request.form.get('notes')
         
-        # Get vehicle by ID
-        vehicle = Vehicle.query.get(vehicle_id)
+        # Validate required fields
+        if not vehicle_id or not license_plate:
+            flash('Vehicle ID and license plate are required', 'danger')
+            return secure_redirect('dashboard.vehicles')
+            
+        # Get vehicle by ID - make sure to convert to int
+        try:
+            vehicle = Vehicle.query.get(int(vehicle_id))
+        except ValueError:
+            flash('Invalid vehicle ID', 'danger')
+            return secure_redirect('dashboard.vehicles')
+            
         if not vehicle:
             flash('Vehicle not found', 'danger')
             return secure_redirect('dashboard.vehicles')
@@ -267,6 +277,9 @@ def edit_vehicle():
             if existing_vehicle:
                 flash(f'License plate {license_plate} is already in use', 'danger')
                 return secure_redirect('dashboard.vehicles')
+        
+        # Log values for debugging
+        logging.debug(f"Updating vehicle {vehicle_id}: license_plate={license_plate}, owner_name={owner_name}")
         
         # Update vehicle details
         vehicle.license_plate = license_plate
@@ -299,14 +312,27 @@ def delete_vehicle():
         # Get vehicle ID from form
         vehicle_id = request.form.get('vehicle_id')
         
-        # Get vehicle by ID
-        vehicle = Vehicle.query.get(vehicle_id)
+        # Validate vehicle ID
+        if not vehicle_id:
+            flash('Vehicle ID is required', 'danger')
+            return secure_redirect('dashboard.vehicles')
+            
+        # Get vehicle by ID - make sure to convert to int
+        try:
+            vehicle = Vehicle.query.get(int(vehicle_id))
+        except ValueError:
+            flash('Invalid vehicle ID', 'danger')
+            return secure_redirect('dashboard.vehicles')
+            
         if not vehicle:
             flash('Vehicle not found', 'danger')
             return secure_redirect('dashboard.vehicles')
         
         # Store license plate for logging
         license_plate = vehicle.license_plate
+        
+        # Log deletion attempt
+        logging.debug(f"Attempting to delete vehicle ID {vehicle_id}: {license_plate}")
         
         # Delete vehicle
         db.session.delete(vehicle)
