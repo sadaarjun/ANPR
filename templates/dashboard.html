@@ -155,7 +155,7 @@
                         </div>
                         <div class="col-6 mb-3">
                             <p class="small text-muted mb-0">Disk Usage</p>
-                            <h5>{{ stats.disk_usage.percent_used|default(0) }}%</h5>
+                            <h5>{{ stats.disk_usage.percent_used|default(0) if stats.disk_usage else 0 }}%</h5>
                         </div>
                     </div>
                 </div>
