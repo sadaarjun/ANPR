@@ -186,8 +186,9 @@ def search_vehicles(query):
     """Search for vehicles by license plate or owner information"""
     try:
         query = f"%{query}%"
+        # Use _license_plate for database column instead of property
         vehicles = Vehicle.query.filter(
-            (Vehicle.license_plate.like(query)) | 
+            (Vehicle._license_plate.like(query)) | 
             (Vehicle.owner_name.like(query)) | 
             (Vehicle.owner_phone.like(query))
         ).all()
@@ -200,7 +201,8 @@ def search_vehicles(query):
 def search_logs(query, start_date=None, end_date=None):
     """Search for logs by license plate with optional date range"""
     try:
-        query = f"%{query}%"
+        # Convert query to uppercase to match license plate format and use like or ilike consistently
+        query = f"%{query.upper()}%"
         base_query = Log.query.filter(Log.license_plate.like(query))
         
         if start_date:
