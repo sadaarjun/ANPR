@@ -200,7 +200,7 @@ def add_vehicle():
         # Validate license plate
         if not license_plate:
             flash('License plate is required', 'danger')
-            return redirect(url_for('dashboard.vehicles'))
+            return secure_redirect('dashboard.vehicles')
         
         # Check if vehicle already exists (case insensitive)
         # Use the _license_plate column which stores uppercase values
@@ -208,7 +208,7 @@ def add_vehicle():
         existing_vehicle = Vehicle.query.filter(Vehicle._license_plate == license_plate.upper()).first()
         if existing_vehicle:
             flash(f'Vehicle with license plate {license_plate} already exists', 'danger')
-            return redirect(url_for('dashboard.vehicles'))
+            return secure_redirect('dashboard.vehicles')
         
         # Create new vehicle
         vehicle = Vehicle(
@@ -233,7 +233,7 @@ def add_vehicle():
         flash(f'Error adding vehicle: {str(e)}', 'danger')
         logging.error(f"Error adding vehicle: {str(e)}")
     
-    return redirect(url_for('dashboard.vehicles'))
+    return secure_redirect('dashboard.vehicles')
 
 @dashboard_bp.route('/edit_vehicle', methods=['POST'])
 @login_required
@@ -303,7 +303,7 @@ def delete_vehicle():
         vehicle = Vehicle.query.get(vehicle_id)
         if not vehicle:
             flash('Vehicle not found', 'danger')
-            return redirect(url_for('dashboard.vehicles'))
+            return secure_redirect('dashboard.vehicles')
         
         # Store license plate for logging
         license_plate = vehicle.license_plate
@@ -320,9 +320,7 @@ def delete_vehicle():
         flash(f'Error deleting vehicle: {str(e)}', 'danger')
         logging.error(f"Error deleting vehicle: {str(e)}")
     
-    # Use url_with_token to ensure auth token is included in the redirect
-    from routes.auth import url_with_token
-    return redirect(url_with_token('dashboard.vehicles'))
+    return secure_redirect('dashboard.vehicles')
 
 @dashboard_bp.route('/logs')
 @login_required
@@ -478,7 +476,7 @@ def settings():
     """System settings page"""
     if not current_user.is_admin:
         flash('You do not have permission to access settings', 'danger')
-        return redirect(url_for('dashboard.index'))
+        return secure_redirect('dashboard.index')
     
     if request.method == 'POST':
         try:
@@ -486,7 +484,7 @@ def settings():
             config = current_app.config.get('SYSTEM_CONFIG')
             if not config:
                 flash('System configuration not found', 'danger')
-                return redirect(url_for('dashboard.settings'))
+                return secure_redirect('dashboard.settings')
             
             # Camera settings
             resolution_w = request.form.get('camera_resolution_width', type=int)
