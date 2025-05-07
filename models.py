@@ -36,7 +36,7 @@ class User(user_mixin_base, db.Model):
 
 class Vehicle(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    license_plate = db.Column(db.String(20), unique=True, nullable=False)
+    _license_plate = db.Column('license_plate', db.String(20), unique=True, nullable=False)
     owner_name = db.Column(db.String(100))
     owner_phone = db.Column(db.String(20))
     flat_unit_number = db.Column(db.String(50))  # Added flat/unit number field
