@@ -193,6 +193,9 @@ def create_app():
                     session['login_timestamp'] = token_data.get('timestamp')
                     session['auth_token'] = auth_token
                     
+                    # We won't set a cookie here since it causes problems with Flask's request lifecycle
+                    # The cookie will be set in the login process instead
+                    
                     # Make sure session is saved
                     session.permanent = True
                     session.modified = True

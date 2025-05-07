@@ -219,18 +219,33 @@ except ImportError:
     # Function to generate URLs with the auth token appended
     def url_with_token(endpoint, **values):
         """Generate a URL with the auth token appended if available"""
+        # Check for token parameter in the values dict - if it exists, use it directly
+        if 'token' in values:
+            token = values.pop('token')
+            url = url_for(endpoint, **values)
+            url += ('&' if '?' in url else '?') + 'token=' + token
+            return url
+            
+        # No token in values, generate URL first
         url = url_for(endpoint, **values)
         
         # Make sure we have a request context
         from flask import has_request_context
         
-        # First check if we have an auth token in the URL parameters
-        if has_request_context() and request.args.get('token'):
+        token = None
+        # First check if we have an auth token in the session (most reliable)
+        if session and 'auth_token' in session and session['auth_token'] is not None:
+            token = session['auth_token']
+        # Then check if we have an auth token in the URL parameters
+        elif has_request_context() and request.args.get('token'):
             token = request.args.get('token')
+        # Check the cookie as a last resort
+        elif has_request_context() and request.cookies.get(current_app.config.get('AUTH_COOKIE_NAME', 'anpr_auth')):
+            token = request.cookies.get(current_app.config.get('AUTH_COOKIE_NAME', 'anpr_auth'))
+            
+        # Add token to URL if we found one
+        if token:
             url += ('&' if '?' in url else '?') + 'token=' + token
-        # Otherwise check if we have an auth token in the session
-        elif session and 'auth_token' in session and session['auth_token'] is not None:
-            url += ('&' if '?' in url else '?') + 'token=' + session['auth_token']
         
         return url
 
