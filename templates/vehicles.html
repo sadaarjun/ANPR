@@ -17,7 +17,7 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ url_for('dashboard.vehicles') }}" class="row g-3">
-                <input type="hidden" name="token" value="{{ request.args.get('token', '') }}">
+                <input type="hidden" name="token" value="{{ session.get('auth_token', request.args.get('token', '')) }}">
                 <div class="col-md-6">
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
