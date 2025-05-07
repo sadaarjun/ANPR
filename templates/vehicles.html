@@ -284,7 +284,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete the vehicle with license plate <strong id="delete_license_plate"></strong>?</p>
+                <p>Are you sure you want to delete the vehicle with license plate <strong id="delete_license_plate_text"></strong>?</p>
                 <p class="text-danger">This action cannot be undone. All logs associated with this vehicle will remain in the database but will no longer be linked to a vehicle.</p>
             </div>
             <form method="POST" action="{{ url_with_token('dashboard.delete_vehicle') }}">
