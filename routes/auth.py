@@ -172,6 +172,33 @@ except ImportError:
             except RuntimeError:
                 # If called outside app context
                 return None
+                
+        @property
+        def created_at(self):
+            # Get the user from the database to access the created_at field
+            if self.id:
+                user = User.query.get(self.id)
+                if user:
+                    return user.created_at
+            return datetime.utcnow()  # Fallback
+            
+        @property
+        def last_login(self):
+            # Get the user from the database to access the last_login field
+            if self.id:
+                user = User.query.get(self.id)
+                if user:
+                    return user.last_login
+            return None
+            
+        @property
+        def email(self):
+            # Get the user from the database to access the email field
+            if self.id:
+                user = User.query.get(self.id)
+                if user:
+                    return user.email
+            return ''
     
     current_user = CurrentUser()
     

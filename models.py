@@ -39,6 +39,7 @@ class Vehicle(db.Model):
     license_plate = db.Column(db.String(20), unique=True, nullable=False)
     owner_name = db.Column(db.String(100))
     owner_phone = db.Column(db.String(20))
+    flat_unit_number = db.Column(db.String(50))  # Added flat/unit number field
     vehicle_type = db.Column(db.String(50))
     mygate_id = db.Column(db.String(100))
     status = db.Column(db.String(20), default='active')  # active, blacklisted, etc.
@@ -49,6 +50,12 @@ class Vehicle(db.Model):
     
     # Relationships
     logs = db.relationship('Log', backref='vehicle', lazy='dynamic')
+    
+    def __init__(self, **kwargs):
+        # Convert license plate to uppercase before saving
+        if 'license_plate' in kwargs:
+            kwargs['license_plate'] = kwargs['license_plate'].upper()
+        super(Vehicle, self).__init__(**kwargs)
 
 class Log(db.Model):
     id = db.Column(db.Integer, primary_key=True)
