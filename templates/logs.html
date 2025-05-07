@@ -16,8 +16,7 @@
     <!-- Search and Filter Card -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ url_for('dashboard.logs') }}" class="row g-3">
-                <input type="hidden" name="token" value="{{ session.get('auth_token', request.args.get('token', '')) }}">
+            <form method="GET" action="{{ url_with_token('dashboard.logs') }}" class="row g-3">
                 <div class="col-md-4">
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
