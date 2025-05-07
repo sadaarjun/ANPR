@@ -116,8 +116,9 @@ def vehicles():
     query = Vehicle.query
     
     if search:
+        # Convert to uppercase for license plate matching, use _license_plate column
         query = query.filter(
-            (Vehicle.license_plate.ilike(f'%{search}%')) |
+            (Vehicle._license_plate.ilike(f'%{search.upper()}%')) |
             (Vehicle.owner_name.ilike(f'%{search}%')) |
             (Vehicle.owner_phone.ilike(f'%{search}%'))
         )
@@ -315,7 +316,8 @@ def logs():
     query = Log.query
     
     if search:
-        query = query.filter(Log.license_plate.ilike(f'%{search}%'))
+        # Convert search to uppercase to match license plate format
+        query = query.filter(Log.license_plate.ilike(f'%{search.upper()}%'))
     
     if event_type:
         query = query.filter(Log.event_type == event_type)
