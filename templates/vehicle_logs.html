@@ -192,7 +192,9 @@
                         <a class="page-link" href="{{ url_with_token('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=pagination.page-1, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">Previous</a>
                     </li>
                     
-                    {% for page_num in range(max(1, pagination.page - 2), min(pagination.pages + 1, pagination.page + 3)) %}
+                    {% set start_page = pagination.page - 2 if pagination.page > 2 else 1 %}
+                    {% set end_page = pagination.page + 2 if pagination.page + 2 < pagination.pages else pagination.pages %}
+                    {% for page_num in range(start_page, end_page + 1) %}
                     <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
                         <a class="page-link" href="{{ url_with_token('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=page_num, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">{{ page_num }}</a>
                     </li>
