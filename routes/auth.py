@@ -280,7 +280,6 @@ def login():
         # Add auth token to session and use URL parameters as a fallback
         from datetime import timedelta
         logging.debug(f"Session cookie before setting: {session.get('user_id')}")
-        logging.debug(f"Auth token value: {session.get('auth_token')[:20]}...")
         
         # Get the auth cookie name from config
         auth_cookie_name = current_app.config.get('AUTH_COOKIE_NAME', 'anpr_auth')
@@ -289,20 +288,8 @@ def login():
         # Set the auth token as a direct cookie
         max_age = auth_cookie_duration
         expires = datetime.utcnow() + timedelta(seconds=auth_cookie_duration)
-        resp.set_cookie(
-            auth_cookie_name,          # Use the auth cookie name
-            session['auth_token'],      # Use the auth token from the session
-            max_age=max_age,           # Cookie duration
-            expires=expires,           # Also set expires
-            path='/',                  # Allow all paths
-            httponly=True,             # Prevent JavaScript access
-            samesite='Lax',            # Allow redirects
-            secure=False               # Don't require HTTPS
-        )
         
-        logging.debug(f"Set auth cookie '{auth_cookie_name}' with token value {session['auth_token'][:20]}...")
-        
-        # Also set the standard session cookie
+        # Set up standard session cookie
         cookie_name = current_app.config.get('SESSION_COOKIE_NAME', 'session')
         std_cookie = request.cookies.get('session', '')
         if std_cookie:
@@ -323,12 +310,14 @@ def login():
         next_page = request.args.get('next')
         
         # Create a URL with a token parameter
-        url = url_for('dashboard.index', token=session['auth_token'])
+        token_url = url_for('dashboard.index', token=session['auth_token'])
         if next_page:
-            url = next_page + ('&' if '?' in next_page else '?') + 'token=' + session['auth_token']
+            token_url = next_page + ('&' if '?' in next_page else '?') + 'token=' + session['auth_token']
         
-        logging.debug(f"Redirecting to URL with token: {url[:50]}...")
-        resp = redirect(url)
+        logging.debug(f"Redirecting to URL with token: {token_url[:50]}...")
+        
+        # Update the response to use the tokenized URL
+        resp = redirect(token_url)
         
         logging.debug(f"Final response to be returned: {resp}")
         return resp

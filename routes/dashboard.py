@@ -30,8 +30,36 @@ dashboard_bp = Blueprint('dashboard', __name__, url_prefix='')
 def index():
     """Dashboard home page"""
     try:
-        # Get system stats
-        stats = utils.generate_system_stats()
+        # Get system stats with proper error handling
+        try:
+            stats = utils.generate_system_stats()
+            if 'disk_usage' not in stats or stats['disk_usage'] is None:
+                stats['disk_usage'] = {
+                    'total_gb': 0,
+                    'used_gb': 0,
+                    'free_gb': 0,
+                    'percent_used': 0
+                }
+        except Exception as stats_err:
+            logging.error(f"Error generating system stats: {str(stats_err)}")
+            stats = {
+                'total_vehicles': 0,
+                'total_logs': 0,
+                'resident_vehicles': 0,
+                'visitor_vehicles': 0,
+                'today_logs': 0,
+                'today_entries': 0,
+                'today_exits': 0,
+                'success_count': 0,
+                'error_count': 0,
+                'uptime': 'Unknown',
+                'disk_usage': {
+                    'total_gb': 0,
+                    'used_gb': 0,
+                    'free_gb': 0,
+                    'percent_used': 0
+                }
+            }
         
         # Get recent logs
         recent_logs = utils.get_recent_logs(10)
