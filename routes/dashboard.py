@@ -12,6 +12,7 @@ import os
 import logging
 from models import Vehicle, Log, Setting
 from app import db
+import utils
 
 # Try to import OpenCV - if it's not available, use our mock from utils
 try:
@@ -20,7 +21,6 @@ try:
 except ImportError:
     logging.warning("OpenCV (cv2) is not available in dashboard routes. Using mock version.")
     from utils import cv2, HAS_OPENCV
-import utils
 
 # Create a blueprint for dashboard routes
 dashboard_bp = Blueprint('dashboard', __name__, url_prefix='')
@@ -424,7 +424,8 @@ def logs():
         start_date=start_date_str,
         end_date=end_date_str,
         current_date=datetime.now().strftime('%Y-%m-%d'),
-        current_year=datetime.now().year
+        current_year=datetime.now().year,
+        utils=utils  # Pass the utils module to the template
     )
 
 @dashboard_bp.route('/vehicle_logs/<int:vehicle_id>')
@@ -493,7 +494,8 @@ def vehicle_logs(vehicle_id):
         end_date=end_date_str,
         Log=Log,  # Pass the Log model to the template
         current_date=datetime.now().strftime('%Y-%m-%d'),
-        current_year=datetime.now().year
+        current_year=datetime.now().year,
+        utils=utils  # Pass the utils module to the template
     )
 
 @dashboard_bp.route('/settings', methods=['GET', 'POST'])
