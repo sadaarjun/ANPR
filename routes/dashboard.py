@@ -5,7 +5,7 @@ try:
     from flask_login import login_required, current_user
 except ImportError:
     # Import our custom login_required and current_user from auth.py if flask_login is not available
-    from routes.auth import login_required, current_user
+    from routes.auth import login_required, current_user, url_with_token
 from datetime import datetime, timedelta
 import base64
 import os
@@ -24,6 +24,11 @@ import utils
 
 # Create a blueprint for dashboard routes
 dashboard_bp = Blueprint('dashboard', __name__, url_prefix='')
+
+# Helper function to redirect with token - use this instead of redirect(url_for(...))
+def secure_redirect(endpoint, **kwargs):
+    """Wrapper for redirect that ensures auth token is included"""
+    return redirect(url_with_token(endpoint, **kwargs))
 
 @dashboard_bp.route('/')
 @login_required
@@ -250,7 +255,7 @@ def edit_vehicle():
         vehicle = Vehicle.query.get(vehicle_id)
         if not vehicle:
             flash('Vehicle not found', 'danger')
-            return redirect(url_for('dashboard.vehicles'))
+            return secure_redirect('dashboard.vehicles')
         
         # Check if license plate is already taken by another vehicle (case insensitive)
         if license_plate != vehicle.license_plate:
@@ -261,7 +266,7 @@ def edit_vehicle():
             ).first()
             if existing_vehicle:
                 flash(f'License plate {license_plate} is already in use', 'danger')
-                return redirect(url_for('dashboard.vehicles'))
+                return secure_redirect('dashboard.vehicles')
         
         # Update vehicle details
         vehicle.license_plate = license_plate
@@ -284,7 +289,7 @@ def edit_vehicle():
         flash(f'Error updating vehicle: {str(e)}', 'danger')
         logging.error(f"Error updating vehicle: {str(e)}")
     
-    return redirect(url_for('dashboard.vehicles'))
+    return secure_redirect('dashboard.vehicles')
 
 @dashboard_bp.route('/delete_vehicle', methods=['POST'])
 @login_required
@@ -315,7 +320,9 @@ def delete_vehicle():
         flash(f'Error deleting vehicle: {str(e)}', 'danger')
         logging.error(f"Error deleting vehicle: {str(e)}")
     
-    return redirect(url_for('dashboard.vehicles'))
+    # Use url_with_token to ensure auth token is included in the redirect
+    from routes.auth import url_with_token
+    return redirect(url_with_token('dashboard.vehicles'))
 
 @dashboard_bp.route('/logs')
 @login_required
