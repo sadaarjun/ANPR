@@ -188,18 +188,59 @@
         <div class="card-footer">
             <nav aria-label="Logs pagination">
                 <ul class="pagination justify-content-center mb-0">
+                    <!-- Previous Page -->
                     <li class="page-item {% if pagination.page == 1 %}disabled{% endif %}">
                         <a class="page-link" href="{{ url_with_token('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=pagination.page-1, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">Previous</a>
                     </li>
                     
-                    {% set start_page = pagination.page - 2 if pagination.page > 2 else 1 %}
-                    {% set end_page = pagination.page + 2 if pagination.page + 2 < pagination.pages else pagination.pages %}
-                    {% for page_num in range(start_page, end_page + 1) %}
-                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
-                        <a class="page-link" href="{{ url_with_token('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=page_num, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">{{ page_num }}</a>
+                    <!-- Page 1 -->
+                    <li class="page-item {% if pagination.page == 1 %}active{% endif %}">
+                        <a class="page-link" href="{{ url_with_token('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=1, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">1</a>
                     </li>
-                    {% endfor %}
                     
+                    <!-- Ellipsis if needed -->
+                    {% if pagination.page > 3 %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Current page - 1 (if not page 1) -->
+                    {% if pagination.page > 2 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_with_token('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=pagination.page-1, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">{{ pagination.page - 1 }}</a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Current page (if not page 1) -->
+                    {% if pagination.page != 1 and pagination.page != pagination.pages %}
+                    <li class="page-item active">
+                        <a class="page-link" href="{{ url_with_token('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=pagination.page, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">{{ pagination.page }}</a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Current page + 1 (if not last page) -->
+                    {% if pagination.page < pagination.pages - 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_with_token('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=pagination.page+1, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">{{ pagination.page + 1 }}</a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Ellipsis if needed -->
+                    {% if pagination.page < pagination.pages - 2 %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Last page (if not page 1) -->
+                    {% if pagination.pages > 1 %}
+                    <li class="page-item {% if pagination.page == pagination.pages %}active{% endif %}">
+                        <a class="page-link" href="{{ url_with_token('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=pagination.pages, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">{{ pagination.pages }}</a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Next Page -->
                     <li class="page-item {% if pagination.page == pagination.pages %}disabled{% endif %}">
                         <a class="page-link" href="{{ url_with_token('dashboard.vehicle_logs', vehicle_id=vehicle.id, page=pagination.page+1, event_type=event_type, status=status, start_date=start_date, end_date=end_date) }}">Next</a>
                     </li>
