@@ -56,6 +56,15 @@ class Vehicle(db.Model):
         if 'license_plate' in kwargs:
             kwargs['license_plate'] = kwargs['license_plate'].upper()
         super(Vehicle, self).__init__(**kwargs)
+        
+    @property
+    def license_plate(self):
+        return self._license_plate
+        
+    @license_plate.setter
+    def license_plate(self, value):
+        if value:
+            self._license_plate = value.upper()
 
 class Log(db.Model):
     id = db.Column(db.Integer, primary_key=True)
