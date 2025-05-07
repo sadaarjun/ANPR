@@ -55,6 +55,7 @@
                             <th>License Plate</th>
                             <th>Owner Name</th>
                             <th>Owner Phone</th>
+                            <th>Flat/Unit</th>
                             <th>Vehicle Type</th>
                             <th>Status</th>
                             <th>Resident</th>
@@ -71,6 +72,7 @@
                                 </td>
                                 <td>{{ vehicle.owner_name or 'N/A' }}</td>
                                 <td>{{ vehicle.owner_phone or 'N/A' }}</td>
+                                <td>{{ vehicle.flat_unit_number or 'N/A' }}</td>
                                 <td>{{ vehicle.vehicle_type or 'Unknown' }}</td>
                                 <td>
                                     <span class="badge bg-{{ 'success' if vehicle.status == 'active' else 'danger' if vehicle.status == 'blacklisted' else 'secondary' }}">
@@ -116,7 +118,7 @@
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="8" class="text-center py-4">No vehicles found</td>
+                                <td colspan="9" class="text-center py-4">No vehicles found</td>
                             </tr>
                         {% endif %}
                     </tbody>

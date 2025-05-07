@@ -209,6 +209,7 @@ def edit_vehicle():
         license_plate = request.form.get('license_plate')
         owner_name = request.form.get('owner_name')
         owner_phone = request.form.get('owner_phone')
+        flat_unit_number = request.form.get('flat_unit_number')
         vehicle_type = request.form.get('vehicle_type')
         status = request.form.get('status')
         is_resident = True if request.form.get('is_resident') else False
@@ -231,6 +232,7 @@ def edit_vehicle():
         vehicle.license_plate = license_plate
         vehicle.owner_name = owner_name
         vehicle.owner_phone = owner_phone
+        vehicle.flat_unit_number = flat_unit_number
         vehicle.vehicle_type = vehicle_type
         vehicle.status = status
         vehicle.is_resident = is_resident
