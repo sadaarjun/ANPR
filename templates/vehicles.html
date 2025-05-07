@@ -96,6 +96,7 @@
                                                 data-bs-license-plate="{{ vehicle.license_plate }}"
                                                 data-bs-owner-name="{{ vehicle.owner_name or '' }}"
                                                 data-bs-owner-phone="{{ vehicle.owner_phone or '' }}"
+                                                data-bs-flat-unit-number="{{ vehicle.flat_unit_number or '' }}"
                                                 data-bs-vehicle-type="{{ vehicle.vehicle_type or '' }}"
                                                 data-bs-status="{{ vehicle.status }}"
                                                 data-bs-is-resident="{{ 'true' if vehicle.is_resident else 'false' }}"
@@ -170,6 +171,10 @@
                         <input type="text" class="form-control" id="owner_phone" name="owner_phone">
                     </div>
                     <div class="mb-3">
+                        <label for="flat_unit_number" class="form-label">Flat/Unit Number</label>
+                        <input type="text" class="form-control" id="flat_unit_number" name="flat_unit_number">
+                    </div>
+                    <div class="mb-3">
                         <label for="vehicle_type" class="form-label">Vehicle Type</label>
                         <select class="form-select" id="vehicle_type" name="vehicle_type">
                             <option value="">Select type...</option>
@@ -227,6 +232,10 @@
                     <div class="mb-3">
                         <label for="edit_owner_phone" class="form-label">Owner Phone</label>
                         <input type="text" class="form-control" id="edit_owner_phone" name="owner_phone">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_flat_unit_number" class="form-label">Flat/Unit Number</label>
+                        <input type="text" class="form-control" id="edit_flat_unit_number" name="flat_unit_number">
                     </div>
                     <div class="mb-3">
                         <label for="edit_vehicle_type" class="form-label">Vehicle Type</label>
@@ -300,6 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const licensePlate = button.getAttribute('data-bs-license-plate');
             const ownerName = button.getAttribute('data-bs-owner-name');
             const ownerPhone = button.getAttribute('data-bs-owner-phone');
+            const flatUnitNumber = button.getAttribute('data-bs-flat-unit-number') || '';
             const vehicleType = button.getAttribute('data-bs-vehicle-type');
             const status = button.getAttribute('data-bs-status');
             const isResident = button.getAttribute('data-bs-is-resident') === 'true';
@@ -310,6 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('edit_license_plate').value = licensePlate;
             document.getElementById('edit_owner_name').value = ownerName;
             document.getElementById('edit_owner_phone').value = ownerPhone;
+            document.getElementById('edit_flat_unit_number').value = flatUnitNumber;
             document.getElementById('edit_vehicle_type').value = vehicleType;
             document.getElementById('edit_status').value = status;
             document.getElementById('edit_is_resident').checked = isResident;
