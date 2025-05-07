@@ -300,49 +300,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Handle Edit Vehicle Modal
-    const editVehicleModal = document.getElementById('editVehicleModal');
-    if (editVehicleModal) {
-        editVehicleModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const vehicleId = button.getAttribute('data-bs-vehicle-id');
-            const licensePlate = button.getAttribute('data-bs-license-plate');
-            const ownerName = button.getAttribute('data-bs-owner-name');
-            const ownerPhone = button.getAttribute('data-bs-owner-phone');
-            const flatUnitNumber = button.getAttribute('data-bs-flat-unit-number') || '';
-            const vehicleType = button.getAttribute('data-bs-vehicle-type');
-            const status = button.getAttribute('data-bs-status');
-            const isResident = button.getAttribute('data-bs-is-resident') === 'true';
-            const notes = button.getAttribute('data-bs-notes');
-            
-            // Set modal values
-            document.getElementById('edit_vehicle_id').value = vehicleId;
-            document.getElementById('edit_license_plate').value = licensePlate;
-            document.getElementById('edit_owner_name').value = ownerName;
-            document.getElementById('edit_owner_phone').value = ownerPhone;
-            document.getElementById('edit_flat_unit_number').value = flatUnitNumber;
-            document.getElementById('edit_vehicle_type').value = vehicleType;
-            document.getElementById('edit_status').value = status;
-            document.getElementById('edit_is_resident').checked = isResident;
-            document.getElementById('edit_notes').value = notes;
-        });
-    }
-    
-    // Handle Delete Vehicle Modal
-    const deleteVehicleModal = document.getElementById('deleteVehicleModal');
-    if (deleteVehicleModal) {
-        deleteVehicleModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const vehicleId = button.getAttribute('data-bs-vehicle-id');
-            const licensePlate = button.getAttribute('data-bs-license-plate');
-            
-            // Set modal values
-            document.getElementById('delete_vehicle_id').value = vehicleId;
-            document.getElementById('delete_license_plate_text').textContent = licensePlate;
-        });
-    }
-});
-</script>
+<!-- Vehicle modal functionality is handled in dashboard.js -->
 {% endblock %}
