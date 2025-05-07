@@ -16,18 +16,22 @@ anpr_processor = None
 def create_app():
     # Set up the Flask application
     app = Flask(__name__)
-    app.secret_key = os.environ.get("SESSION_SECRET", "anpr_secret_key")
+    app.secret_key = os.environ.get("SESSION_SECRET", "anpr_secret_key_for_secure_sessions")
     # Configure session
     from datetime import timedelta
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # 7 days
+    app.config['SESSION_TYPE'] = 'filesystem'  # Store sessions in files for better persistence
+    app.config['SESSION_FILE_DIR'] = './flask_session'  # Location for session files
     app.config['SESSION_COOKIE_SECURE'] = False  # Don't require HTTPS
     app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Allow redirects with cookies
     app.config['SESSION_COOKIE_PATH'] = '/'  # Allow cookies for all paths
     app.config['SESSION_COOKIE_NAME'] = 'anpr_session'  # Custom session cookie name
+    app.config['SESSION_USE_SIGNER'] = True  # Sign the session cookie
     
     # Add a special key for direct authentication cookie
     app.config['AUTH_COOKIE_NAME'] = 'anpr_auth'  # Auth token cookie name
+    app.config['AUTH_COOKIE_DURATION'] = 60*60*24*7  # 7 days in seconds
     app.config['AUTH_COOKIE_DURATION'] = 60 * 60 * 24 * 7  # 7 days in seconds
     
     # Increase logging level for debugging
@@ -141,17 +145,66 @@ def create_app():
     # Add a before_request handler to initialize the session
     @app.before_request
     def before_request():
-        from flask import session, request
+        from flask import session, request, current_app
         import logging
-        # Log the session for debugging
-        if request.endpoint != 'static':
-            logging.debug(f"Session before request to {request.path}: {session}")
+        import base64, json
+        
+        # Skip for static files
+        if request.endpoint == 'static':
+            return
             
-        # Make sure session is configured properly
-        if 'user_id' in session:
+        # Log the session for debugging
+        logging.debug(f"Session before request to {request.path}: {session}")
+        
+        # Check if we already have a valid session
+        if 'user_id' in session and session.get('user_id') is not None:
             # Make the session permanent during each request
             session.permanent = True
             session.modified = True
+            return
+            
+        # If not in session, try to get from cookie or URL parameter
+        auth_cookie_name = current_app.config.get('AUTH_COOKIE_NAME', 'anpr_auth')
+        
+        # Try cookie first
+        auth_token = request.cookies.get(auth_cookie_name)
+        
+        # If not in cookie, try URL parameter
+        if not auth_token and request.args.get('token'):
+            auth_token = request.args.get('token')
+            
+        # If we found a token, try to decode it
+        if auth_token:
+            try:
+                # Decode the token
+                decoded_bytes = base64.b64decode(auth_token)
+                decoded_str = decoded_bytes.decode()
+                token_data = json.loads(decoded_str)
+                
+                # Check token validity (not expired)
+                import time
+                now = time.time()
+                if now - token_data.get('timestamp', 0) <= 60*60*24*7:  # 7 days in seconds
+                    # Valid token, set session values
+                    session['user_id'] = token_data.get('id')
+                    session['username'] = token_data.get('username')
+                    session['is_admin'] = token_data.get('is_admin')
+                    session['authenticated'] = True
+                    session['login_timestamp'] = token_data.get('timestamp')
+                    session['auth_token'] = auth_token
+                    
+                    # Make sure session is saved
+                    session.permanent = True
+                    session.modified = True
+                    
+                    # Also set app config variables
+                    current_app.config['CURRENT_USER_ID'] = session['user_id']
+                    current_app.config['CURRENT_USER_USERNAME'] = session['username']
+                    current_app.config['CURRENT_USER_IS_ADMIN'] = session['is_admin']
+                    
+                    logging.debug(f"Restored session from token for user_id={session['user_id']}")
+            except Exception as e:
+                logging.error(f"Error processing auth token in before_request: {str(e)}")
     
     # Create an admin user if none exists
     def create_admin_user(app):
