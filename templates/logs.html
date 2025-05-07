@@ -210,7 +210,13 @@
                     <div class="card h-100 text-center">
                         <div class="card-body">
                             <h6 class="card-title">Today's Entries</h6>
-                            <p class="display-5">{{ logs|selectattr('event_type', 'equalto', 'entry')|selectattr('timestamp', 'ge', current_date|string + ' 00:00:00')|list|length }}</p>
+                            {% set today_entries = 0 %}
+                            {% for log in logs %}
+                                {% if log.event_type == 'entry' and log.timestamp.strftime('%Y-%m-%d') == current_date %}
+                                    {% set today_entries = today_entries + 1 %}
+                                {% endif %}
+                            {% endfor %}
+                            <p class="display-5">{{ today_entries }}</p>
                         </div>
                     </div>
                 </div>
@@ -218,7 +224,13 @@
                     <div class="card h-100 text-center">
                         <div class="card-body">
                             <h6 class="card-title">Today's Exits</h6>
-                            <p class="display-5">{{ logs|selectattr('event_type', 'equalto', 'exit')|selectattr('timestamp', 'ge', current_date|string + ' 00:00:00')|list|length }}</p>
+                            {% set today_exits = 0 %}
+                            {% for log in logs %}
+                                {% if log.event_type == 'exit' and log.timestamp.strftime('%Y-%m-%d') == current_date %}
+                                    {% set today_exits = today_exits + 1 %}
+                                {% endif %}
+                            {% endfor %}
+                            <p class="display-5">{{ today_exits }}</p>
                         </div>
                     </div>
                 </div>
