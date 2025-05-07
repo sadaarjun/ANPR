@@ -135,7 +135,9 @@
                         <a class="page-link" href="{{ url_with_token('dashboard.vehicles', page=pagination.page-1, search=search, status=status, type=type) }}">Previous</a>
                     </li>
                     
-                    {% for page_num in range(max(1, pagination.page - 2), min(pagination.pages + 1, pagination.page + 3)) %}
+                    {% set start_page = pagination.page - 2 if pagination.page > 2 else 1 %}
+                    {% set end_page = pagination.page + 2 if pagination.page + 2 < pagination.pages else pagination.pages %}
+                    {% for page_num in range(start_page, end_page + 1) %}
                     <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
                         <a class="page-link" href="{{ url_with_token('dashboard.vehicles', page=page_num, search=search, status=status, type=type) }}">{{ page_num }}</a>
                     </li>
