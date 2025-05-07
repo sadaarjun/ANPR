@@ -157,6 +157,7 @@ def add_vehicle():
         license_plate = request.form.get('license_plate')
         owner_name = request.form.get('owner_name')
         owner_phone = request.form.get('owner_phone')
+        flat_unit_number = request.form.get('flat_unit_number')
         vehicle_type = request.form.get('vehicle_type')
         status = request.form.get('status', 'active')
         is_resident = True if request.form.get('is_resident') else False
@@ -178,6 +179,7 @@ def add_vehicle():
             license_plate=license_plate,
             owner_name=owner_name,
             owner_phone=owner_phone,
+            flat_unit_number=flat_unit_number,
             vehicle_type=vehicle_type,
             status=status,
             is_resident=is_resident,
