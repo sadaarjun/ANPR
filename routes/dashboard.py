@@ -197,8 +197,10 @@ def add_vehicle():
             flash('License plate is required', 'danger')
             return redirect(url_for('dashboard.vehicles'))
         
-        # Check if vehicle already exists
-        existing_vehicle = Vehicle.query.filter_by(license_plate=license_plate).first()
+        # Check if vehicle already exists (case insensitive)
+        # Use the _license_plate column which stores uppercase values
+        # Convert input to uppercase to match the database storage
+        existing_vehicle = Vehicle.query.filter(Vehicle._license_plate == license_plate.upper()).first()
         if existing_vehicle:
             flash(f'Vehicle with license plate {license_plate} already exists', 'danger')
             return redirect(url_for('dashboard.vehicles'))
@@ -250,10 +252,14 @@ def edit_vehicle():
             flash('Vehicle not found', 'danger')
             return redirect(url_for('dashboard.vehicles'))
         
-        # Check if license plate is already taken by another vehicle
+        # Check if license plate is already taken by another vehicle (case insensitive)
         if license_plate != vehicle.license_plate:
-            existing_vehicle = Vehicle.query.filter_by(license_plate=license_plate).first()
-            if existing_vehicle and existing_vehicle.id != int(vehicle_id):
+            # Use the _license_plate column and uppercase the input for case-insensitive comparison
+            existing_vehicle = Vehicle.query.filter(
+                Vehicle._license_plate == license_plate.upper(),
+                Vehicle.id != int(vehicle_id)
+            ).first()
+            if existing_vehicle:
                 flash(f'License plate {license_plate} is already in use', 'danger')
                 return redirect(url_for('dashboard.vehicles'))
         
