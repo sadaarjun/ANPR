@@ -144,6 +144,7 @@ def vehicles():
         search=search,
         status=status,
         type=type_filter,
+        Log=Log,  # Pass the Log model to the template
         current_year=datetime.now().year
     )
 
@@ -419,6 +420,7 @@ def vehicle_logs(vehicle_id):
         status=status,
         start_date=start_date_str,
         end_date=end_date_str,
+        Log=Log,  # Pass the Log model to the template
         current_date=datetime.now().strftime('%Y-%m-%d'),
         current_year=datetime.now().year
     )
