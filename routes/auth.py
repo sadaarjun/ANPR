@@ -328,7 +328,12 @@ def login():
         if next_page:
             token_url = next_page + ('&' if '?' in next_page else '?') + 'token=' + session['auth_token']
         
-        # Set the auth token as a direct cookie
+        logging.debug(f"Redirecting to URL with token: {token_url[:50]}...")
+        
+        # Create a response with the redirect
+        resp = redirect(token_url)
+        
+        # Set the auth token as a direct cookie AFTER creating the response
         resp.set_cookie(
             auth_cookie_name,
             session['auth_token'],
@@ -340,10 +345,17 @@ def login():
             secure=False
         )
         
-        logging.debug(f"Redirecting to URL with token: {token_url[:50]}...")
-        
-        # Update the response to use the tokenized URL
-        resp = redirect(token_url)
+        # Also set a session cookie for redundancy
+        resp.set_cookie(
+            'user_id',
+            str(user.id),
+            max_age=max_age,
+            expires=expires,
+            path='/',
+            httponly=True,
+            samesite='Lax',
+            secure=False
+        )
         
         logging.debug(f"Final response to be returned: {resp}")
         return resp
