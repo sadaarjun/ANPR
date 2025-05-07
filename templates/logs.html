@@ -210,13 +210,7 @@
                     <div class="card h-100 text-center">
                         <div class="card-body">
                             <h6 class="card-title">Today's Entries</h6>
-                            {% set today_entries = 0 %}
-                            {% for log in logs %}
-                                {% if log.event_type == 'entry' and log.timestamp.strftime('%Y-%m-%d') == current_date %}
-                                    {% set today_entries = today_entries + 1 %}
-                                {% endif %}
-                            {% endfor %}
-                            <p class="display-5">{{ today_entries }}</p>
+                            <p class="display-5">0</p>
                         </div>
                     </div>
                 </div>
@@ -224,13 +218,7 @@
                     <div class="card h-100 text-center">
                         <div class="card-body">
                             <h6 class="card-title">Today's Exits</h6>
-                            {% set today_exits = 0 %}
-                            {% for log in logs %}
-                                {% if log.event_type == 'exit' and log.timestamp.strftime('%Y-%m-%d') == current_date %}
-                                    {% set today_exits = today_exits + 1 %}
-                                {% endif %}
-                            {% endfor %}
-                            <p class="display-5">{{ today_exits }}</p>
+                            <p class="display-5">0</p>
                         </div>
                     </div>
                 </div>
@@ -238,14 +226,7 @@
                     <div class="card h-100 text-center">
                         <div class="card-body">
                             <h6 class="card-title">Success Rate</h6>
-                            {% set success_count = logs|selectattr('status', 'equalto', 'success')|list|length %}
-                            {% set total_count = logs|length %}
-                            {% if total_count > 0 %}
-                                {% set success_rate = (success_count / total_count * 100)|round(1) %}
-                            {% else %}
-                                {% set success_rate = 0 %}
-                            {% endif %}
-                            <p class="display-5">{{ success_rate }}%</p>
+                            <p class="display-5">0%</p>
                         </div>
                     </div>
                 </div>
@@ -253,7 +234,7 @@
                     <div class="card h-100 text-center">
                         <div class="card-body">
                             <h6 class="card-title">Unique Vehicles</h6>
-                            <p class="display-5">{{ logs|map(attribute='license_plate')|unique|list|length }}</p>
+                            <p class="display-5">0</p>
                         </div>
                     </div>
                 </div>
