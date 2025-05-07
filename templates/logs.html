@@ -16,7 +16,8 @@
     <!-- Search and Filter Card -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ url_with_token('dashboard.logs') }}" class="row g-3">
+            <form method="GET" action="{{ url_for('dashboard.logs') }}" class="row g-3">
+                <input type="hidden" name="token" value="{{ request.args.get('token', '') }}">
                 <div class="col-md-4">
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -84,8 +85,8 @@
                                 </td>
                                 <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                                 <td>
-                                    <span class="{{ utils.get_confidence_color(log.confidence) }}">
-                                        {{ "%.2f"|format(log.confidence * 100) if log.confidence else 'N/A' }}%
+                                    <span class="badge {% if log.confidence > 90 %}bg-success{% elif log.confidence > 70 %}bg-info{% else %}bg-danger{% endif %}">
+                                        {{ "%.2f"|format(log.confidence) if log.confidence else 'N/A' }}%
                                     </span>
                                 </td>
                                 <td>
