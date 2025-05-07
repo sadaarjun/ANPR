@@ -136,7 +136,7 @@
                                 </td>
                                 <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                                 <td>
-                                    <span class="{{ utils.get_confidence_color(log.confidence) }}">
+                                    <span class="badge {% if log.confidence > 0.9 %}bg-success{% elif log.confidence > 0.7 %}bg-info{% elif log.confidence > 0.5 %}bg-warning{% else %}bg-danger{% endif %}">
                                         {{ "%.2f"|format(log.confidence * 100) if log.confidence else 'N/A' }}%
                                     </span>
                                 </td>
